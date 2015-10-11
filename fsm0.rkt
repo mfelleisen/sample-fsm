@@ -51,7 +51,7 @@
   ;;           % use Name = Event
   ;; Event     = COOPERATE | DEFECT
   (define COOPERATE 0)
-  (define DEFECT 1)
+  (define DEFECT    1)
   
   ; a transition rule: an event and the result state
   ; a state: name and many transition rules
@@ -60,7 +60,14 @@
   ;; GENERATE POPULATION
   (define (A)
     (for/list ([n (in-range 100)])
-      (create (random 2) (random 2) (random 2) (random 2) (random 2))))
+      (create (one-of COOPERATE DEFECT)
+              (one-of COOPERATE DEFECT)
+              (one-of COOPERATE DEFECT)
+              (one-of COOPERATE DEFECT)
+              (one-of COOPERATE DEFECT))))
+
+  (define (one-of . x)
+    (list-ref x (random (length x))))
 
   ;; Name Name Name Name Namw -> Automaton
   ;; seed is either COOPERATE or DEFECT 
@@ -166,19 +173,14 @@
              [define-values (step1 step2) (match-strategies strat1 strat2)]
              (values (+ step1 sum1) (+ step2 sum2) (update auto1 next1) (update auto2 next2) next1 next2)))
          (list* sum1 sum2 (loop (rest (rest population))))])))
-
-  (define c-c (list COOPERATE COOPERATE))
-  (define c-d (list COOPERATE DEFECT))
-  (define d-c (list DEFECT COOPERATE))
-  (define d-d (list DEFECT DEFECT))
-
+  
   ;; Strategy Strategy ->* N N 
   (define (match-strategies strat1 strat2)
-    (match (list strat1 strat2)
-      [c-c (values 3 3)]
-      [c-d (values 0 4)]
-      [d-c (values 4 0)]
-      [d-d (values 1 1)])))
+    (cond 
+      [(and (equal? COOPERATE strat1) (equal? COOPERATE strat2)) (values 3 3)]
+      [(and (equal? COOPERATE strat1) (equal? DEFECT strat2))    (values 0 4)]
+      [(and (equal? DEFECT strat1) (equal? COOPERATE strat2))    (values 4 0)]
+      [else                                                      (values 1 1)])))
 
 (module full racket
   (provide main)
