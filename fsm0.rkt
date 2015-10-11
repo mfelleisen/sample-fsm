@@ -44,7 +44,6 @@
   ;; State     = (state Name??? [Listof Action])
   ;; Action    = (action Event??? [Listof State])
   
-  
   ; a transition rule: an event and the result state
   ; a state: name and many transition rules
   ; the machine itself: current state + states
@@ -58,22 +57,18 @@
     (automaton seed
                (list (state 0 (list (action 0 a000) (action 1 a001)))
                      (state 1 (list (action 0 a100) (action 1 a101))))))
-    
   
   ; extract the result of the needed action, given an event
-  (define (react an-event an-auto)
-    (define a-name (automaton-current-state an-auto))
-    (define states (automaton-states an-auto))
-    (define result-state
-      (for/first ([s (in-list states)] #:when (equal? a-name (state-name s))) s))
-    (cond
-      [result-state
-       (define actions (state-actions result-state))
-       (define result
-         (for/first ([a (in-list actions)] #:when (equal? an-event (action-event a))) a))
-       (if result (action-result result) '())]
-      [else an-auto]))
-  
+  (define (react event automaton)
+    (define name (automaton-current-state automaton))
+    (define states (automaton-states automaton))
+    (define actions (apply-to-first states name state-name state-actions))
+    (apply-to-first actions event action-event action-result))
+
+  (define (apply-to-first l x sel f)
+    (define result (for/first ([a (in-list l)] #:when (equal? x (sel a))) a))
+    (if result (f result) '()))
+
   ; update the state of the auto, return the auto
   (define (update old-auto new-state)
     (set-automaton-current-state! old-auto new-state)
