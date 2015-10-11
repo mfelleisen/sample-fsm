@@ -31,6 +31,8 @@
 (module automaton racket
   
   (provide
+   COOPERATE
+   DEFECT 
    automaton-current-state
    A
    react
@@ -40,9 +42,16 @@
   (struct automaton (current-state states) #:transparent #:mutable)
   (struct state (name actions) #:transparent #:mutable)
   (struct action (event result) #:transparent #:mutable)
-  ;; Automaton = (automaton State [Listof State])
-  ;; State     = (state Name??? [Listof Action])
-  ;; Action    = (action Event??? [Listof State])
+  ;; Automaton = (automaton Name [Listof State])
+  ;;           % name of current state, combined with transitions
+  ;; State     = (state Name [Listof Action])
+  ;;           % name of state, combined with transitions in response to events 
+  ;; Action    = (action Event Name)
+  ;; Name      : unspecified
+  ;;           % use Name = Event
+  ;; Event     = COOPERATE | DEFECT
+  (define COOPERATE 0)
+  (define DEFECT 1)
   
   ; a transition rule: an event and the result state
   ; a state: name and many transition rules
@@ -53,10 +62,12 @@
     (for/list ([n (in-range 100)])
       (create (random 2) (random 2) (random 2) (random 2) (random 2))))
 
+  ;; Name Name Name Name Namw -> Automaton
+  ;; seed is either COOPERATE or DEFECT 
   (define (create seed a000 a001 a100 a101)
-    (automaton seed
-               (list (state 0 (list (action 0 a000) (action 1 a001)))
-                     (state 1 (list (action 0 a100) (action 1 a101))))))
+    (define state1 (state COOPERATE (list (action COOPERATE a000) (action DEFECT a001))))
+    (define state2 (state DEFECT (list (action COOPERATE a100) (action DEFECT a101))))
+    (automaton seed (list state1 state2)))
   
   ; extract the result of the needed action, given an event
   (define (react event automaton)
@@ -75,18 +86,16 @@
     old-auto)
   
   ;; CLASSIC AUTOMATA
-  ;; let 0 = cooperate, 1 = defect
-  ;; some classic automata
-  ;; the all defector has 2 states of cooperate and defect
-  ;; but it always defects, no matter what
-  ;; the opponent may play cooperate or defect
-  ;; it doesnt care, it always stay in the state defect
-  (define all-defects (create 1 1 1 1 1))
-  (define all-cooperates (create 0 0 0 0 0))
-  ;; the tit for tat starts out optimistic, it cooperates initially
-  ;; however, if the opponent defects, it punishes by switching to defecting
-  ;; if the opponent cooperates, it returns to play cooperate again
-  (define tit-for-tat (create 0 0 1 0 1))
+  (define all-defects (create COOPERATE DEFECT DEFECT DEFECT DEFECT))
+
+  (define all-cooperates (create DEFECT COOPERATE COOPERATE COOPERATE COOPERATE))
+
+  ;; the tit-for-tat strategy starts out optimistic:
+  ;; it cooperates initially
+  ;; if the opponent defects, it switches to defecting
+  ;; if the opponent cooperates, it plays cooperately
+  (define tit-for-tat (create COOPERATE COOPERATE DEFECT COOPERATE DEFECT))
+
   ;; the grim trigger also starts out optimistic,
   ;; but the opponent defects for just once then
   ;; it jumps to defect forever
@@ -157,14 +166,19 @@
              [define-values (step1 step2) (match-strategies strat1 strat2)]
              (values (+ step1 sum1) (+ step2 sum2) (update auto1 next1) (update auto2 next2) next1 next2)))
          (list* sum1 sum2 (loop (rest (rest population))))])))
-  
+
+  (define c-c (list COOPERATE COOPERATE))
+  (define c-d (list COOPERATE DEFECT))
+  (define d-c (list DEFECT COOPERATE))
+  (define d-d (list DEFECT DEFECT))
+
   ;; Strategy Strategy ->* N N 
   (define (match-strategies strat1 strat2)
     (match (list strat1 strat2)
-      [(list 0 0) (values 3 3)]
-      [(list 0 1) (values 0 4)]
-      [(list 1 0) (values 4 0)]
-      [(list 1 1) (values 1 1)])))
+      [c-c (values 3 3)]
+      [c-d (values 0 4)]
+      [d-c (values 4 0)]
+      [d-d (values 1 1)])))
 
 (module full racket
   (provide main)
