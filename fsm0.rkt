@@ -47,11 +47,10 @@
   ;; State     = (state Name [Listof Action])
   ;;           % name of state, combined with transitions in response to events 
   ;; Action    = (action Event Name)
-  ;; Name      : unspecified
-  ;;           % use Name = Event
+  ;; Name      = Event % ??
   ;; Event     = COOPERATE | DEFECT
-  (define COOPERATE 0)
-  (define DEFECT    1)
+  (define COOPERATE 'c)
+  (define DEFECT    'd)
   
   ; a transition rule: an event and the result state
   ; a state: name and many transition rules
@@ -66,8 +65,9 @@
               (one-of COOPERATE DEFECT)
               (one-of COOPERATE DEFECT))))
 
-  (define (one-of . x)
-    (list-ref x (random (length x))))
+  #;
+  (define (one-of . x) (list-ref x (random (length x))))
+  (define (one-of x y) (if (= (random 2) 0) x y))
 
   ;; Name Name Name Name Namw -> Automaton
   ;; seed is either COOPERATE or DEFECT 
