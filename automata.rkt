@@ -1,12 +1,13 @@
 #lang racket
 
 (provide
- COOPERATE
- DEFECT 
- automaton-current-state
+ ;; type Population = [Listof Automaton] of even length
+ ;; type Payoff     = PositiveNumber 
+ 
+ ;; -> Population 
  A
- react
- update)
+ ;; Automata Automata -> Payoff Payoff Automata Automata 
+ interact)
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; AUTOMATON
@@ -27,41 +28,48 @@
 ; a state: name and many transition rules
 ; the machine itself: current state + states
 
-;; GENERATE POPULATION
 (define (A)
   (for/list ([n (in-range 100)])
-    (create (one-of COOPERATE DEFECT)
-            (one-of COOPERATE DEFECT)
-            (one-of COOPERATE DEFECT)
-            (one-of COOPERATE DEFECT)
-            (one-of COOPERATE DEFECT))))
+            (create (one-of COOPERATE DEFECT)
+                    (one-of COOPERATE DEFECT)
+                    (one-of COOPERATE DEFECT)
+                    (one-of COOPERATE DEFECT)
+                    (one-of COOPERATE DEFECT))))
+
+;; Name Name Name Name Name -> Automaton
+(define (create seed a000 a001 a100 a101)
+  (define state1 (state COOPERATE (list (action COOPERATE a000) (action DEFECT a001))))
+  (define state2 (state DEFECT    (list (action COOPERATE a100) (action DEFECT a101))))
+  (automaton seed (list state1 state2)))
+
+(define (interact auto1 auto2)
+  (match-define (automaton strat1 states1) auto1)
+  (match-define (automaton strat2 states2) auto2)
+  [define-values (payoff1 payoff2) (match-strategies strat1 strat2)]
+  (define actions1 (apply-to-first states1 strat1 state-name state-actions))
+  (define next1    (apply-to-first actions1 strat2 action-event action-result))
+  (define actions2 (apply-to-first states2 strat2 state-name state-actions))
+  (define next2    (apply-to-first actions2 strat1 action-event action-result))
+  (values payoff1 payoff2 (automaton next1 states1) (automaton next2 states2)))
+
+;; Event Event ->* Payoff Payoff
+(define (match-strategies strat1 strat2)
+  (cond 
+    [(and (equal? COOPERATE strat1) (equal? COOPERATE strat2)) (values 3 3)]
+    [(and (equal? COOPERATE strat1) (equal? DEFECT strat2))    (values 0 4)]
+    [(and (equal? DEFECT strat1) (equal? COOPERATE strat2))    (values 4 0)]
+    [else                                                      (values 1 1)]))
 
 #;
 (define (one-of . x) (list-ref x (random (length x))))
+
+;; X X -> X
 (define (one-of x y) (if (= (random 2) 0) x y))
 
-;; Name Name Name Name Namw -> Automaton
-;; seed is either COOPERATE or DEFECT 
-(define (create seed a000 a001 a100 a101)
-  (define state1 (state COOPERATE (list (action COOPERATE a000) (action DEFECT a001))))
-  (define state2 (state DEFECT (list (action COOPERATE a100) (action DEFECT a101))))
-  (automaton seed (list state1 state2)))
-
-; extract the result of the needed action, given an event
-(define (react event automaton)
-  (define name (automaton-current-state automaton))
-  (define states (automaton-states automaton))
-  (define actions (apply-to-first states name state-name state-actions))
-  (apply-to-first actions event action-event action-result))
-
+;; [Listof X] Y [X -> Y] [X -> Z] -> '() or Z
 (define (apply-to-first l x sel f)
   (define result (for/first ([a (in-list l)] #:when (equal? x (sel a))) a))
   (if result (f result) '()))
-
-; update the state of the auto, return the auto
-(define (update old-auto new-state)
-  (set-automaton-current-state! old-auto new-state)
-  old-auto)
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; CLASSIC AUTOMATA
