@@ -4,18 +4,20 @@
  ;; type [Population X]
  
  ;; N [N -> X] -> Population
- ;; (build-population n c) for even n, build a population of size n with c
- ;; constraint: (even? n)
+ ;; (build-population n c) for even n, build a population of size n 
+ ;; with c constraint: (even? n)
  build-population
 
  ;; Population N [X X -> Y] -> [Listof Y]
  ;; (match-ups p r) matches up neighboring pairs of
  ;; automata in population p for r rounds per match
- ;; constraint: (= (length population) (length fitness))
- ;; constraint: the i-th fitness describes the i-th population 
  match-ups
 
  ;; Population [Listof [0,1]] N -> Population 
+ ;; (death-birth p f r) replaces r elements of p with r "children" of 
+ ;; randomly picked fittest elements of p
+ ;; constraint: (= (vector-length p) (length f))
+ ;; constraint: the i-th fitness describes the i-th population 
  death-birth)
 
 ;; ---------------------------------------------------------------------------------------------------
