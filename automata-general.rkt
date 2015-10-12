@@ -21,8 +21,8 @@
 ;; Action    = (action Event Name)
 ;; Name      = Event % ??
 ;; Event     = COOPERATE | DEFECT
-(define COOPERATE 0)
-(define DEFECT    1)
+(define COOPERATE 'c)
+(define DEFECT    'd)
 
 ; a transition rule: an event and the result state
 ; a state: name and many transition rules
@@ -38,9 +38,9 @@
 
 ;; Name Name Name Name Name -> Automaton
 (define (create seed a000 a001 a100 a101)
-  (define state1 (state COOPERATE (vector (action COOPERATE a000) (action DEFECT a001))))
-  (define state2 (state DEFECT    (vector (action COOPERATE a100) (action DEFECT a101))))
-  (automaton seed (vector state1 state2)))
+  (define state1 (state COOPERATE (list (action COOPERATE a000) (action DEFECT a001))))
+  (define state2 (state DEFECT    (list (action COOPERATE a100) (action DEFECT a101))))
+  (automaton seed (list state1 state2)))
 
 (define (interact auto1 auto2)
   (match-define (automaton strat1 states1) auto1)
@@ -66,12 +66,7 @@
 ;; X X -> X
 (define (one-of x y) (if (= (random 2) 0) x y))
 
-;; [Vector X] N Any [X -> Z] -> Z
-(define (apply-to-first l x sel f)
-  (f (vector-ref l x)))
-  
 ;; [Listof X] Y [X -> Y] [X -> Z] -> '() or Z
-#;
 (define (apply-to-first l x sel f)
   (define result (for/first ([a (in-list l)] #:when (equal? x (sel a))) a))
   (if result (f result) '()))
