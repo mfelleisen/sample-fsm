@@ -124,9 +124,8 @@
         [define average-payoff (/ sum (* rounds-per-match #i100.))]
         [define accum-fitness (payoff-percentages-accumulated round-results sum)]
         [define survivors (drop population speed)]
-        ;; MF: THIS LOOKS LIKE IT MAY "RESURRECT" AUTOM. THAT ARE ALIVE
-        [define successors (randomise-over-fitness accum-fitness population speed)]
-        [define new-population (shuffle (append survivors successors))]
+        [define substitutes (randomise-over-fitness accum-fitness population speed)]
+        [define new-population (shuffle (append survivors substitutes))]
         (values (cons average-payoff result) new-population)))
     (reverse result))
   
@@ -140,12 +139,11 @@
         (values (cons next-init accumulated) next-init)))
     (reverse accumulated))
   
-  ;; REGENERATE FITTEST AUTOMATA
-  ;; at the end of the cycle, i kill 10%
-  ;; so i resurrect automata by randomising over the fitness vector
+  ;; spawn another set of fitt automata
+  ;; at the end of the cycle, kill N%; then spawn child-copies of "fittest"
   (define (randomise-over-fitness accumulated-payoff-percentage population speed)
     (for/list ([n (in-range speed)])
-      [define r (random)]
+      [define r (random)] ;; SHOULDN"T THIS LINE BE OUTSIDE OF THE for/list COMPREHENSION?
       (for/and ([p (in-list population)][a (in-list accumulated-payoff-percentage)]
                                         #:break (< r a))
         p)))
