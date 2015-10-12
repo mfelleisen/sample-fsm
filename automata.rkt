@@ -1,7 +1,6 @@
 #lang racket
 
 (provide
- ;; type Population = [Listof Automaton] of even length
  ;; type Payoff     = PositiveNumber 
  
  ;; -> Population 
@@ -10,6 +9,9 @@
  interact)
 
 ;; ---------------------------------------------------------------------------------------------------
+
+(require "population.rkt")
+
 ;; AUTOMATON
 (struct automaton (current-state states) #:transparent #:mutable)
 (struct state (name actions) #:transparent #:mutable)
@@ -29,12 +31,14 @@
 ; the machine itself: current state + states
 
 (define (A)
-  (for/list ([n (in-range 100)])
-            (create (one-of COOPERATE DEFECT)
-                    (one-of COOPERATE DEFECT)
-                    (one-of COOPERATE DEFECT)
-                    (one-of COOPERATE DEFECT)
-                    (one-of COOPERATE DEFECT))))
+  (build-population
+   100
+   (lambda (_)
+     (create (one-of COOPERATE DEFECT)
+             (one-of COOPERATE DEFECT)
+             (one-of COOPERATE DEFECT)
+             (one-of COOPERATE DEFECT)
+             (one-of COOPERATE DEFECT)))))
 
 ;; Name Name Name Name Name -> Automaton
 (define (create seed a000 a001 a100 a101)
@@ -69,7 +73,7 @@
 ;; [Vector X] N Any [X -> Z] -> Z
 (define (apply-to-first l x sel f)
   (f (vector-ref l x)))
-  
+
 ;; [Listof X] Y [X -> Y] [X -> Z] -> '() or Z
 #;
 (define (apply-to-first l x sel f)
