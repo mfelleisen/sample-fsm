@@ -20,15 +20,10 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 
-;; type [Population X] = (Cons [Vectorof X] [Vectorof X])
-;; the first vector carries the current "citizens", death-birth switches the two 
-
 (define (build-population n f)
-  (cons (build-vector n f) (make-vector n #false)))
+  (build-list n f))
 
-(define (match-ups population0 rounds-per-match interact)
-  (define population (car population0))
-  (define n (vector-length population))
+(define (match-ups population rounds-per-match interact)
   ;; Automata Automata ->* Number Number Any Any Any Any 
   ;; the sum of pay-offs for the two respective automata over all rounds 
   (define (match-up auto1 auto2)
@@ -36,35 +31,32 @@
       (define-values (d1 d2 next1 next2) (interact auto1 auto2))
       (values (+ d1 sum1) (+ d2 sum2) next1 next2)))
   ;; -- IN --
-  (let pair-up-loop ([i 0])
+  (let pair-up-loop ([population population])
     (cond
-      [(>= i n) '()] ; a population is a list of even length 
-      [else (define p1 (vector-ref population i))
-            (define p2 (vector-ref population (+ i 1)))
-            (define-values (sum1 sum2 _1 _2) (match-up p1 p2))
-            (list* sum1 sum2 (pair-up-loop (+ i 2)))])))
+      [(empty? population) '()] ; a population is a list of even length 
+      [else (define-values (sum1 sum2 _1 _2) (match-up (first population) (second population)))
+            (list* sum1 sum2 (pair-up-loop (rest (rest population))))])))
 
-(define (death-birth population0 fitness rate)
-  (define population (car population0))
+(define (death-birth population fitness speed)
   ;; MF: why are we dropping of the first 'speed'?
-  [define substitutes (randomise-over-fitness population fitness rate)]
-  (for ([i (in-range rate)][p substitutes])
-    (vector-set! population i p))
-  (shuffle-vector population (cdr population0)))
+  [define survivors (drop population speed)]
+  [define substitutes (randomise-over-fitness population fitness speed)]
+  (shuffle (append survivors substitutes)))
 
-;; [Population X] [Listof [0,1]] N -> [Listof X]
+;; Population [Listof [0,1]] N -> Population 
 ;; spawn another set of fitt automata
 ;; at the end of the cycle, kill N%; then spawn child-copies of "fittest"
 (define (randomise-over-fitness population fitness speed)
   (for/list ([n (in-range speed)])
-    [define r (random)]
-    (for/last ([p (in-vector population)]
+    [define r (random)] 
+    (for/last ([p (in-list population)]
                [f (in-list fitness)]
               #:break (< r f))
       p)))
 
-;; [Vectorof X] {Vectorof X] -> (cons [Vectorof X] [Vectorof X])
-;; effect: shuffle vector b into vector a
+
+;; [Vectorof X] {Vectorof X] -> [Vectorof X]
+;; shuffle vector b into vector a
 ;; constraint: (= (vector-length a) (vector-length b))
 ;; Fisher-Yates Shuffle
 (define (shuffle-vector b a)
@@ -72,6 +64,6 @@
     (define j (random (add1 i)))
     (unless (= j i) (vector-set! a i (vector-ref a j)))
     (vector-set! a j x))
-  (cons a b))
+  a)
 
-; (shuffle-vector (vector 1 2 3 4 5 6) (make-vector 6 'a))
+(shuffle-vector (vector 1 2 3 4 5 6) (make-vector 6 'a))
