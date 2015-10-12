@@ -64,11 +64,11 @@
               (one-of COOPERATE DEFECT)
               (one-of COOPERATE DEFECT)
               (one-of COOPERATE DEFECT))))
-
+  
   #;
   (define (one-of . x) (list-ref x (random (length x))))
   (define (one-of x y) (if (= (random 2) 0) x y))
-
+  
   ;; Name Name Name Name Namw -> Automaton
   ;; seed is either COOPERATE or DEFECT 
   (define (create seed a000 a001 a100 a101)
@@ -82,11 +82,11 @@
     (define states (automaton-states automaton))
     (define actions (apply-to-first states name state-name state-actions))
     (apply-to-first actions event action-event action-result))
-
+  
   (define (apply-to-first l x sel f)
     (define result (for/first ([a (in-list l)] #:when (equal? x (sel a))) a))
     (if result (f result) '()))
-
+  
   ; update the state of the auto, return the auto
   (define (update old-auto new-state)
     (set-automaton-current-state! old-auto new-state)
@@ -94,15 +94,15 @@
   
   ;; CLASSIC AUTOMATA
   (define all-defects (create COOPERATE DEFECT DEFECT DEFECT DEFECT))
-
+  
   (define all-cooperates (create DEFECT COOPERATE COOPERATE COOPERATE COOPERATE))
-
+  
   ;; the tit-for-tat strategy starts out optimistic:
   ;; it cooperates initially
   ;; if the opponent defects, it switches to defecting
   ;; if the opponent cooperates, it plays cooperately
   (define tit-for-tat (create COOPERATE COOPERATE DEFECT COOPERATE DEFECT))
-
+  
   ;; the grim trigger also starts out optimistic,
   ;; but the opponent defects for just once then
   ;; it jumps to defect forever
@@ -153,26 +153,26 @@
   ;; Population N -> [Listof Number]
   ;; MATCH POPULATION
   (define (match-population population rounds-per-match)
-    (let loop ([population population])
+    ;; Automata Automata ->* Number Number Any Any Any Any 
+    (define (match-up auto1 auto2)
+      (for/fold ([sum1 0]
+                 [sum2 0]
+                 [auto1 auto1]
+                 [auto2 auto2]
+                 [strat1 (automaton-current-state auto1)]
+                 [strat2 (automaton-current-state auto2)])
+                ([_ (in-range rounds-per-match)])
+        [define next1 (react strat2 auto1)]
+        [define next2 (react strat1 auto2)]
+        [define-values (d1 d2) (match-strategies strat1 strat2)]
+        (values (+ d1 sum1) (+ d2 sum2) (update auto1 next1) (update auto2 next2) next1 next2)))
+    ;; -- IN --
+    (let pair-up-loop ([population population])
       (cond
-        [(empty? population) '()]
-        [(empty? (rest population)) '()]
-        [else
-         (define auto1 (first population))
-         (define auto2 (second population))
-         (define-values (sum1 sum2 _1 _2 _3 _4)
-           (for/fold ([sum1 0]
-                      [sum2 0]
-                      [auto1 auto1]
-                      [auto2 auto2]
-                      [strat1 (automaton-current-state auto1)]
-                      [strat2 (automaton-current-state auto2)])
-                     ([_ (in-range rounds-per-match)])
-             [define next1 (react strat2 auto1)]
-             [define next2 (react strat1 auto2)]
-             [define-values (step1 step2) (match-strategies strat1 strat2)]
-             (values (+ step1 sum1) (+ step2 sum2) (update auto1 next1) (update auto2 next2) next1 next2)))
-         (list* sum1 sum2 (loop (rest (rest population))))])))
+        [(or (empty? population) (empty? (rest population))) '()]
+        [else (define-values (sum1 sum2 _1 _2 _3 _4)
+                (match-up (first population) (second population)))
+              (list* sum1 sum2 (pair-up-loop (rest (rest population))))])))
   
   ;; Strategy Strategy ->* N N 
   (define (match-strategies strat1 strat2)
