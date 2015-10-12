@@ -1,3 +1,4 @@
+#! /usr/bin/env racket -tm
 #lang racket
 ;; INTRODUCTION
 ;; I generate a population of finite state automata randomly
