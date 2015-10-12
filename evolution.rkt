@@ -33,11 +33,17 @@
 
 ;; spawn another set of fitt automata
 ;; at the end of the cycle, kill N%; then spawn child-copies of "fittest"
+;;
+;; This procedure uses an independent Bernoulli draw. We independently
+;; draw a random number (associated with an automaton) for 10 times. How
+;; likely an automaton is chosen depends on its own fitness (its interval
+;; in the unit scale of the accumulated percentages.) 
 (define (randomise-over-fitness accumulated-payoff-percentage population speed)
   (for/list ([n (in-range speed)])
-    [define r (random)] ;; SHOULDN"T THIS LINE BE OUTSIDE OF THE for/list COMPREHENSION?
-    (for/and ([p (in-list population)][a (in-list accumulated-payoff-percentage)]
-                                      #:break (< r a))
+    [define r (random)]
+    (for/and ([p (in-list population)]
+	      [a (in-list accumulated-payoff-percentage)]
+	      #:break (< r a))
       p)))
 
 ;; Population N -> [Listof Number]
