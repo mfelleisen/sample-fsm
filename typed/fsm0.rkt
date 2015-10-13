@@ -1,5 +1,5 @@
 #! /usr/bin/env racket -tm
-#lang racket
+#lang typed/racket
 ;; INTRODUCTION
 ;; I generate a population of finite state automata randomly
 ;; in each cycle, they are pair-matched to play a repeated game
@@ -41,12 +41,17 @@
 ;; if the average gets down to 1, the society is in a state
 ;; of everybody defecting everybody
 (define (main)
+  (collect-garbage)
+  (collect-garbage)
+  (collect-garbage)
   (plot (time (simulation->lines))))
 
-;; -> [Listof [List Real Real]]
+(: simulation->lines (-> renderer2d #;[Listof [List Real Real]]))
 (define (simulation->lines)
   (define data (evolve (A) 1000 10 20))
-  (define coors (for/list ([d (in-list data)][n (in-naturals)]) (list n d)))
+  (define coors
+    (for/list : [Listof [List Integer Real]] ([d : Payoff (in-list data)] [n : Integer (in-naturals)])
+      (list n d)))
   (lines coors))
 
 

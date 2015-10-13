@@ -8,16 +8,13 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (require "automata.rkt" "population.rkt" "utilities.rkt")
-(require/typed
- "automata.rkt"
- (interact (All (a) (-> a a (values Real Real a a)))))
 
-(: evolve (All (a) (-> [Population a] Natural Natural Natural [Listof Payoff])))
+(: evolve (-> [Population Automaton] Natural Natural Natural [Listof Payoff]))
 (define (evolve population cycles rate rounds)
   (define-values (result _)
-    (for/fold ([result : [Listof Payoff] '()][population : [Population a] population])
+    (for/fold ([result : [Listof Payoff] '()][population : [Population Automaton] population])
               ([_ (in-range cycles)])
-      [define payoffs (match-ups population rounds interact)]
+      [define payoffs ((inst match-ups Automaton) population rounds interact)]
       (values ({inst cons Real [Listof Payoff]} (relative-average payoffs rounds) result)
               (death-birth population (payoff-percentages payoffs) rate))))
   (reverse result))

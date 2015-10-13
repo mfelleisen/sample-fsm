@@ -3,6 +3,7 @@
 (provide
  ;; type Payoff = PositiveNumber 
  Payoff
+ Automaton
 
  ;; -> [Population Automata]
  A
