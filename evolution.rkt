@@ -23,7 +23,7 @@
 (define (payoff-percentages payoffs)
   (define payoff-sum (sum payoffs))
   (define-values (accumulated _)
-    (for/fold ([accumulated (list 0)] [init 0]) ([y (in-list payoffs)])
+    (for/fold ([accumulated (list)] [init 0]) ([y (in-list payoffs)])
       (define next-init (+ init (/ y payoff-sum)))
       (values (cons next-init accumulated) next-init)))
   (reverse accumulated))
