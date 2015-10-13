@@ -45,9 +45,9 @@
    (plot-mean
     (evolve (A) 1000 10 20))))
 
-;; TV?
+;; [Listof Payoff] -> Plot
 (define (plot-mean data)
-  (define coors (map list (build-list (length data) values) data))
+  (define coors (for/list ([d (in-list data)][n (in-naturals)]) (list n d)))
   (plot (lines coors)))
 
 ;; ACKNOWLEDGEMENT
