@@ -179,7 +179,7 @@
   (define (accumulated-payoff-percentages payoff-list)
     (define payoff-sum (apply + payoff-list))
     (define-values (accumulated _)
-      (for/fold ([accumulated (list 0)]
+      (for/fold ([accumulated (list)]
                  [init 0])
                 ([y (in-list payoff-list)])
         [define next-init (+ init (/ y payoff-sum))]
