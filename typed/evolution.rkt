@@ -7,12 +7,10 @@
  evolve)
 
 ;; ---------------------------------------------------------------------------------------------------
-(require "population.rkt" "utilities.rkt")
+(require "automata.rkt" "population.rkt" "utilities.rkt")
 (require/typed
  "automata.rkt"
  (interact (All (a) (-> a a (values Real Real a a)))))
-
-(define-type Payoff Real)
 
 (: evolve (All (a) (-> [Population a] Natural Natural Natural [Listof Payoff])))
 (define (evolve population cycles rate rounds)

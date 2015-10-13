@@ -41,14 +41,13 @@
 ;; if the average gets down to 1, the society is in a state
 ;; of everybody defecting everybody
 (define (main)
-  (time
-   (plot-mean
-    (evolve (A) 1000 10 20))))
+  (plot (time (simulation->lines))))
 
-;; [Listof Payoff] -> Plot
-(define (plot-mean data)
+;; -> [Listof [List Real Real]]
+(define (simulation->lines)
+  (define data (evolve (A) 1000 10 20))
   (define coors (for/list ([d (in-list data)][n (in-naturals)]) (list n d)))
-  (plot (lines coors)))
+  (lines coors))
 
 
 (module+ test

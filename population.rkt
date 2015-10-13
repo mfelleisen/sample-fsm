@@ -44,7 +44,7 @@
       [else (define p1 (vector-ref population i))
             (define p2 (vector-ref population (+ i 1)))
             (define-values (sum1 sum2 _1 _2) (match-up p1 p2))
-            (list* sum1 sum2 (pair-up-loop (+ i 2)))])))
+            (list* sum1 sum2 (pair-up-loop (+ i 3)))])))
 
 (define (death-birth population0 fitness rate)
   (define population (car population0))
