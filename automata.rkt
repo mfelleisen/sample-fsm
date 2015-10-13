@@ -10,7 +10,7 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 
-(require "population.rkt")
+(require "population.rkt" "utilities.rkt")
 
 ;; AUTOMATON
 (struct automaton (current-state states) #:transparent #:mutable)
@@ -50,10 +50,10 @@
   (match-define (automaton strat1 states1) auto1)
   (match-define (automaton strat2 states2) auto2)
   [define-values (payoff1 payoff2) (match-strategies strat1 strat2)]
-  (define actions1 (apply-to-first states1 strat1 state-name state-actions))
-  (define next1    (apply-to-first actions1 strat2 action-event action-result))
-  (define actions2 (apply-to-first states2 strat2 state-name state-actions))
-  (define next2    (apply-to-first actions2 strat1 action-event action-result))
+  (define actions1 (state-actions (vector-ref states1 strat1)))
+  (define next1    (action-result (vector-ref actions1 strat2)))
+  (define actions2 (state-actions (vector-ref states2 strat2)))
+  (define next2    (action-result (vector-ref actions2 strat1)))
   (values payoff1 payoff2 (automaton next1 states1) (automaton next2 states2)))
 
 ;; Event Event ->* Payoff Payoff
@@ -63,22 +63,6 @@
     [(and (equal? COOPERATE strat1) (equal? DEFECT strat2))    (values 0 4)]
     [(and (equal? DEFECT strat1) (equal? COOPERATE strat2))    (values 4 0)]
     [else                                                      (values 1 1)]))
-
-#;
-(define (one-of . x) (list-ref x (random (length x))))
-
-;; X X -> X
-(define (one-of x y) (if (= (random 2) 0) x y))
-
-;; [Vector X] N Any [X -> Z] -> Z
-(define (apply-to-first l x sel f)
-  (f (vector-ref l x)))
-
-;; [Listof X] Y [X -> Y] [X -> Z] -> '() or Z
-#;
-(define (apply-to-first l x sel f)
-  (define result (for/first ([a (in-list l)] #:when (equal? x (sel a))) a))
-  (if result (f result) '()))
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; CLASSIC AUTOMATA

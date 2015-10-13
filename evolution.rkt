@@ -7,7 +7,7 @@
  evolve)
 
 ;; ---------------------------------------------------------------------------------------------------
-(require "automata.rkt" "population.rkt")
+(require "automata.rkt" "population.rkt" "utilities.rkt")
 
 (define (evolve population cycles rate rounds)
   (define-values (result _)
@@ -27,12 +27,3 @@
       (define next-init (+ init (/ y payoff-sum)))
       (values (cons next-init accumulated) next-init)))
   (reverse accumulated))
-
-;; [Listof Number] -> Number 
-(define (sum l) (apply + l))
-
-;; [Listof Number] Number -> Number
-(define (relative-average l w)
-  (exact->inexact
-   (/ (sum l)
-      w (length l))))

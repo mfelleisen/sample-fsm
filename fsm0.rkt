@@ -50,6 +50,15 @@
   (define coors (for/list ([d (in-list data)][n (in-naturals)]) (list n d)))
   (plot (lines coors)))
 
+
+(module+ test
+  (main)
+  (main)
+  (main)
+  (main)
+  (main))
+  
+
 ;; ACKNOWLEDGEMENT
 ;; Thanks to the blog post of Tim Thornton,
 ;; http://timthornton.net/blog/id/538fa6f2f09a16ba0674813d
