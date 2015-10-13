@@ -32,10 +32,10 @@
 (define (build-population n f)
   ({inst cons (Vectorof a) (Vectorof a)} (build-vector n f) (build-vector n f)))
 
-(: match-ups (All (a b) (-> [Population a] Natural [-> a a (values Real Real a a)] [Listof Real])))
+(: match-ups (All (a) (-> [Population a] Natural [-> a a (values Real Real a a)] [Listof Real])))
 (define (match-ups population0 rounds-per-match interact)
   (define population (car population0))
-  (define n (vector-length population))
+  (define n (- (vector-length population) 1))
   ;; Automata Automata ->* Number Number Any Any Any Any 
   ;; the sum of pay-offs for the two respective automata over all rounds
   (: match-up (-> a a (values Real Real a a)))
@@ -47,10 +47,12 @@
   ;; -- IN --
   (let pair-up-loop : (Listof Real) ([i : Natural 0])
     (cond
-      [(>= i n) '()] ; a population is a list of even length 
+      [(> i n) '()] ; a population is a list of even length 
       [else (define p1 (vector-ref population i))
             (define p2 (vector-ref population (+ i 1)))
-            (define-values (sum1 sum2 _1 _2) (match-up p1 p2))
+            (define-values (sum1 sum2 a1 a2) (match-up p1 p2))
+            (vector-set! population i a1)
+            (vector-set! population (+ i 1) a2)
             (list* sum1 sum2 (pair-up-loop (+ i 2)))])))
 
 (: death-birth (All (a) (-> [Population a] [Listof Real] Natural [Population a])))
