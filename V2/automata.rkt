@@ -1,0 +1,67 @@
+#lang racket
+
+; evolution: pair of neighbors against each other, collect payoffs per round
+; main: plot payoffs
+
+;; -----------------------------------------------------------------------------
+;; Populations of Automata where Each Carries its Life Time Payoff  
+
+;; kill n part of the population and draw n fit ones 
+(define (death-and-birth p n)
+  p)
+
+;; Population -> Population 
+;; wipe out the historic payoff for all elements of a population 
+(define (reset* p)
+  (map reset p))
+
+;; -----------------------------------------------------------------------------
+;; Representing Automata with n States that can React to k Inputs
+
+(struct automaton (current payoff table) #:transparent)
+;; Automaton  = (automaton Payoff State Table)
+;; Table      = [Vectorof n Transition])
+;; Transition = [Vectorof k State]
+;; State      = [0,n)
+;; Input      = [0,k)
+;; Payoff      = N
+
+;; N N -> Automaton
+;; build n x k automaton with random transition table 
+(define (make-random-automaton n k)
+  ;; [Any -> Transition]
+  (define (make-transition _i)
+    (build-vector k (lambda (_) (random n))))
+  (automaton 0 (random n) (build-vector n make-transition)))
+
+;; State Table -> Automaton 
+(define (make-automaton current table)
+  (automaton current 0 table))
+
+;; Automaton -> Automaton 
+;; wipe out the historic payoff
+(define (reset a)
+  (match-define (automaton current payoff table) a)
+  (automaton current 0 table))
+
+;; Automaton Automaton -> Automaton Automaton
+;; give each automaton the reaction of the other in the current state
+;; determine payoff for each and transition the automaton 
+(define (interact a1 a2)
+  (match-define (automaton current1 payoff1 table1) a1)
+  (match-define (automaton current2 payoff2 table2) a2)
+  (match-define (cons p1 p2) (payoff current1 current2))
+  (define n1 (vector-ref (vector-ref table1 current1) current2))
+  (define n2 (vector-ref (vector-ref table1 current1) current2))
+  (define next1 (automaton n1 (+ payoff1 p1) table1))
+  (define next2 (automaton n2 (+ payoff2 p2) table2))
+  (values next1 next2))
+
+;; PayoffTable = [Vectorof k [Vectorof k (cons Payoff Payoff)]]
+(define PAYOFF-TABLE
+  (vector (vector (cons 3 3) (cons 4 0))
+          (vector (cons 0 4) (cons 1 1))))
+
+;; State State -> [Cons Payoff Payoff]
+(define (payoff current1 current2)
+  (vector-ref (vector-ref PAYOFF-TABLE current1) current2))
