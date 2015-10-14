@@ -77,13 +77,43 @@
 
 (define (death-birth population0 rate)
   (define population (car population0))
-  (define fitness (payoff-percentages population))
-  ;; MF: why are we dropping of the first 'speed'?
-  [define substitutes (randomise-over-fitness population fitness rate)]
+  ;; MF: why are we dropping the first 'speed'?
+  [define substitutes (randomise-over-fitness population rate)]
   (for ([i (in-range rate)][p substitutes])
     (vector-set! population i p))
   (shuffle-vector population (cdr population0)))
 
+;; -----------------------------------------------------------------------------
+;; [Vectorof Automaton] N -> [Listof Automaton]
+;; (randomise-over-fitness v n) spawn a list of n fittest automata
+
+;; Nguyen Linh Chi says: 
+;; This procedure uses an independent Bernoulli draw. We independently
+;; draw a random number (associated with an automaton) for 10 times. How
+;; likely an automaton is chosen depends on its own fitness (its interval
+;; in the unit scale of the accumulated percentages.)
+
+(module+ test
+  (define p0 (vector (automaton 0 1 't1)  (automaton 0 90 't1)))
+  (define p1 (list (automaton 0 90 't1)))
+  ;; this test case fails if (random) picks a number < .01
+  (check-equal?
+   (randomise-over-fitness p0 1) (list (automaton 0 90 't1))))
+
+(define (randomise-over-fitness population0 speed)
+  (define fitness (payoff-percentages population0))
+  ;; (= (length fitness) (length population))
+  ;; fitness is sorted and the last number is ~1.0
+  (define population (vector->list population0))
+  (for/list ([n (in-range speed)])
+    [define r (random)]
+    (let find-first ([p population] [f fitness])
+      (cond
+        [(empty? p)
+         (error 'randomise "the unlikely happened: r = ~e is too large" r)]
+        [else (if (< r (first f)) (first p) (find-first (rest p) (rest f)))]))))
+
+;; -----------------------------------------------------------------------------
 ;; [Vectorof Automata] -> [Listof [0,1]]
 ;; from the matching result, calculate the accumulated fitness
 
@@ -106,34 +136,6 @@
       (values (cons next-init accumulated) next-init)))
   (reverse accumulated))
 
-;; -----------------------------------------------------------------------------
-;; [Vectorof Automaton] [Listof [0,1]] N -> [Listof Automaton]
-;; spawn a list of fittest automata
-
-;; Nguyen Linh Chi says: 
-;; This procedure uses an independent Bernoulli draw. We independently
-;; draw a random number (associated with an automaton) for 10 times. How
-;; likely an automaton is chosen depends on its own fitness (its interval
-;; in the unit scale of the accumulated percentages.)
-
-(module+ test
-  (define p0 (vector (automaton 0 1 't1)  (automaton 0 90 't1)))
-  (define p1 (list (automaton 0 90 't1)))
-  ;; this test case fails if (random) picks a number < .01
-  (check-equal?
-   (randomise-over-fitness p0 (payoff-percentages p0) 1)
-   (list (automaton 0 90 't1))))
-
-(define (randomise-over-fitness population0 fitness speed)
-  (define p (vector->list population0))
-  (for/list ([n (in-range speed)])
-    [define r (random)]
-    (let find-first ([p (rest p)] [f fitness] [previous (first p)])
-      (cond
-        [(empty? p) previous]
-        [else (if (< r (first f))
-                  (first p)
-                  (find-first (rest p) (rest f) (first p)))]))))
 
 ;; [Vectorof X] {Vectorof X] -> (cons [Vectorof X] [Vectorof X])
 ;; effect: shuffle vector b into vector a
