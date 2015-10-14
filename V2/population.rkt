@@ -13,6 +13,9 @@
  ;; (build-population n c) for even n, build a population of size n 
  ;; with c constraint: (even? n)
  build-random-population
+
+ ;; Population -> [Listof Payoff]
+ population-payoffs
  
  ;; Population N -> Population
  ;; (match-ups p r) matches up neighboring pairs of
@@ -44,15 +47,20 @@
   (cons v v))
 
 ;; -----------------------------------------------------------------------------
+(define (population-payoffs population0)
+  (define population (car population0))
+  (for/list ([a population]) (automaton-payoff a)))
+
+;; -----------------------------------------------------------------------------
 (define (match-ups population0 rounds-per-match)
   (define population (car population0))
-  ;; comment out this line if you want cummulative payoff histories
-  (set! population (for/vector ([x population]) (reset x)))
+  ;; comment out this line if you want cummulative payoff histories:
+  (for ([x population][i (in-naturals)]) (vector-set! population i (reset x)))
   ;; -- IN --
   (for ([i (in-range (- (vector-length population) 1))])
     (define p1 (vector-ref population i))
     (define p2 (vector-ref population (+ i 1)))
-    (define-values (a1 a2) (match-up p1 p2))
+    (define-values (a1 a2) (match-up p1 p2 rounds-per-match))
     (vector-set! population i a1)
     (vector-set! population (+ i 1) a2))
   population0)
@@ -80,13 +88,15 @@
   (define population (car population0))
   ;; MF: why are we dropping the first 'speed'?
   [define substitutes (randomise-over-fitness population rate)]
-  (for ([i (in-range rate)][p substitutes])
+  (for ([i (in-range rate)][p (in-list substitutes)])
     (vector-set! population i p))
   (shuffle-vector population (cdr population0)))
 
 ;; -----------------------------------------------------------------------------
 ;; Automaton* N -> [Listof Automaton]
-;; (randomise-over-fitness v n) spawn a list of n fittest automata
+;; (randomise-over-fitness v n) spawn a list of n automata
+;; the probabiliy of choosing automaton i is directly proportionally
+;; to its payoff relative to the overall payoff for the entire population
 
 ;; Nguyen Linh Chi says: 
 ;; This procedure uses an independent Bernoulli draw. We independently
@@ -101,41 +111,36 @@
   (check-equal?
    (randomise-over-fitness p0 1) (list (automaton 0 90 't1))))
 
-(define (randomise-over-fitness population speed)
-  (define fitness (payoff-percentages population))
+(define (randomise-over-fitness a* speed)
+  (define %s (payoff-%s a*))
   ;; (= (length fitness) (length population))
-  ;; fitness is sorted and the last number is ~1.0
   (for/list ([n (in-range speed)])
     [define r (random)]
-    (define it
-      (for/last ([p (in-vector population)]
-                 [f (in-list fitness)]
-                 #:final (< r f))
-        p))
-    (or it (error 'randomise "the unlikely happened: r = ~e is too large" r))))
+    ;; population is non-empty so there will be some p such that ... 
+    (for/last ([p (in-vector a*)] [% (in-list %s)] #:final (< r %)) p)))
 
 ;; -----------------------------------------------------------------------------
 ;; Automata* -> [Listof [0,1]]
 ;; from the matching result, calculate the accumulated fitness
 
 (module+ test
-  (check-equal? (payoff-percentages (vector (automaton 0 1 't1)))
+  (check-equal? (payoff-%s (vector (automaton 0 1 't1)))
                 '(1.0))
-  (check-equal? (payoff-percentages
+  (check-equal? (payoff-%s
                  (vector (automaton 0 2 't1) (automaton 0 2 't2)))
                 '(.5 1.0))
-  (check-equal? (payoff-percentages
+  (check-equal? (payoff-%s
                  (vector (automaton 0 2 't1) (automaton 0 8 't2)))
                 '(.2 1.0)))
 
-(define (payoff-percentages population)
-  (define payoffs (for/list ([x population]) (automaton-payoff x)))
-  (define payoff-sum (sum payoffs))
-  (define-values (accumulated _)
-    (for/fold ([accumulated (list)] [init 0]) ([y (in-list payoffs)])
-      (define next-init (exact->inexact (+ init (/ y payoff-sum))))
-      (values (cons next-init accumulated) next-init)))
-  (reverse accumulated))
+(define (payoff-%s a*)
+  (define payoffs (for/list ([x (in-vector a*)]) (automaton-payoff x)))
+  (define total (sum payoffs))
+  (let relative->absolute ([payoffs payoffs][so-far #i0.0])
+    (cond
+      [(empty? payoffs) '()]
+      [else (define nxt (+ so-far (first payoffs)))
+            (cons (/ nxt total) (relative->absolute (rest payoffs) nxt))])))
 
 ;; -----------------------------------------------------------------------------
 ;; Automata* -> (cons Automata* Automata*)
