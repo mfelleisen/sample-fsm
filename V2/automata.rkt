@@ -1,22 +1,36 @@
 #lang racket
 
-; evolution: pair of neighbors against each other, collect payoffs per round
-; main: plot payoffs
+(provide
+ ;; type Automaton
+ automaton
 
-;; -----------------------------------------------------------------------------
-;; Populations of Automata where Each Carries its Life Time Payoff  
+ ;; type Payoff = N 
+ 
+ ;; Automaton -> Payoff 
+ automaton-payoff 
 
-;; kill n part of the population and draw n fit ones 
-(define (death-and-birth p n)
-  p)
+ ;; N N -> Automaton
+ ;; (make-random-automaton n k) builds an n states x k inputs automaton
+ ;; with a random transition table 
+ make-random-automaton
 
-;; Population -> Population 
-;; wipe out the historic payoff for all elements of a population 
-(define (reset* p)
-  (map reset p))
+;; Automaton Automaton -> Automaton Automaton
+ ;; give each automaton the reaction of the other in the current state
+ ;; determine payoff for each and transition the automaton
+ interact
+ 
+ ;; Automaton -> Automaton 
+ ;; wipe out the historic payoff
+ reset)
 
 ;; -----------------------------------------------------------------------------
 ;; Representing Automata with n States that can React to k Inputs
+
+(module+ test
+  (require rackunit))
+
+(define COOPERATE 0)
+(define DEFECT    1)
 
 (struct automaton (current payoff table) #:transparent)
 ;; Automaton  = (automaton Payoff State Table)
@@ -26,27 +40,46 @@
 ;; Input      = [0,k)
 ;; Payoff      = N
 
-;; N N -> Automaton
-;; build n x k automaton with random transition table 
 (define (make-random-automaton n k)
   ;; [Any -> Transition]
   (define (make-transition _i)
     (build-vector k (lambda (_) (random n))))
-  (automaton 0 (random n) (build-vector n make-transition)))
+  (automaton (random n) 0 (build-vector n make-transition)))
 
-;; State Table -> Automaton 
+;; -----------------------------------------------------------------------------
+;; State Table -> Automaton
+(module+ test
+  (define t1
+    (vector
+     (vector 0 0)
+     (vector 1 1)))
+  (define t2
+    (vector
+     (vector 0 1)
+     (vector 0 1)))
+  (define a1 (make-automaton DEFECT t1))
+  (define a2 (make-automaton COOPERATE t2))
+  
+  (check-pred automaton? (make-automaton 0 t1)))
+
 (define (make-automaton current table)
   (automaton current 0 table))
 
-;; Automaton -> Automaton 
-;; wipe out the historic payoff
+;; -----------------------------------------------------------------------------
+(module+ test
+  (check-equal? (reset (automaton 1 4 t2)) (automaton 1 0 t2)))
+
 (define (reset a)
   (match-define (automaton current payoff table) a)
   (automaton current 0 table))
 
-;; Automaton Automaton -> Automaton Automaton
-;; give each automaton the reaction of the other in the current state
-;; determine payoff for each and transition the automaton 
+;; -----------------------------------------------------------------------------
+(module+ test
+  (check-equal? (let-values ([(b1 b2) (interact a1 a2)]) (list b1 b2))
+                (list
+                 (automaton 1 0 t1)
+                 (automaton 1 4 t2))))
+
 (define (interact a1 a2)
   (match-define (automaton current1 payoff1 table1) a1)
   (match-define (automaton current2 payoff2 table2) a2)
@@ -57,6 +90,7 @@
   (define next2 (automaton n2 (+ payoff2 p2) table2))
   (values next1 next2))
 
+;; -----------------------------------------------------------------------------
 ;; PayoffTable = [Vectorof k [Vectorof k (cons Payoff Payoff)]]
 (define PAYOFF-TABLE
   (vector (vector (cons 3 3) (cons 4 0))
