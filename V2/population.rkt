@@ -32,15 +32,16 @@
 (module+ test
   (require rackunit))
 
-;; type [Population X] = (Cons [Vectorof X] [Vectorof X])
+;; Population = (Cons Automaton* Automaton*)
+;; Automaton* = [Vectorof Automaton]
 ;; the first vector carries the current "citizens", death-birth switches the two 
 
 (define DEF-COO 2)
 
 ;; -----------------------------------------------------------------------------
 (define (build-random-population n)
-  (cons (build-vector n (lambda (_) (make-random-automaton DEF-COO DEF-COO)))
-        (make-vector n #false)))
+  (define v (build-vector n (lambda (_) (make-random-automaton DEF-COO DEF-COO))))
+  (cons v v))
 
 ;; -----------------------------------------------------------------------------
 (define (match-ups population0 rounds-per-match)
@@ -84,7 +85,7 @@
   (shuffle-vector population (cdr population0)))
 
 ;; -----------------------------------------------------------------------------
-;; [Vectorof Automaton] N -> [Listof Automaton]
+;; Automaton* N -> [Listof Automaton]
 ;; (randomise-over-fitness v n) spawn a list of n fittest automata
 
 ;; Nguyen Linh Chi says: 
@@ -100,21 +101,21 @@
   (check-equal?
    (randomise-over-fitness p0 1) (list (automaton 0 90 't1))))
 
-(define (randomise-over-fitness population0 speed)
-  (define fitness (payoff-percentages population0))
+(define (randomise-over-fitness population speed)
+  (define fitness (payoff-percentages population))
   ;; (= (length fitness) (length population))
   ;; fitness is sorted and the last number is ~1.0
-  (define population (vector->list population0))
   (for/list ([n (in-range speed)])
     [define r (random)]
-    (let find-first ([p population] [f fitness])
-      (cond
-        [(empty? p)
-         (error 'randomise "the unlikely happened: r = ~e is too large" r)]
-        [else (if (< r (first f)) (first p) (find-first (rest p) (rest f)))]))))
+    (define it
+      (for/last ([p (in-vector population)]
+                 [f (in-list fitness)]
+                 #:final (< r f))
+        p))
+    (or it (error 'randomise "the unlikely happened: r = ~e is too large" r))))
 
 ;; -----------------------------------------------------------------------------
-;; [Vectorof Automata] -> [Listof [0,1]]
+;; Automata* -> [Listof [0,1]]
 ;; from the matching result, calculate the accumulated fitness
 
 (module+ test
@@ -136,8 +137,8 @@
       (values (cons next-init accumulated) next-init)))
   (reverse accumulated))
 
-
-;; [Vectorof X] {Vectorof X] -> (cons [Vectorof X] [Vectorof X])
+;; -----------------------------------------------------------------------------
+;; Automata* -> (cons Automata* Automata*)
 ;; effect: shuffle vector b into vector a
 ;; constraint: (= (vector-length a) (vector-length b))
 ;; Fisher-Yates Shuffle
