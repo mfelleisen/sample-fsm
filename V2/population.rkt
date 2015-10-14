@@ -106,39 +106,34 @@
       (values (cons next-init accumulated) next-init)))
   (reverse accumulated))
 
-;; Population [Listof [0,1]] N -> [Listof Automaton]
-;; spawn another set of fittest automata
-;; at the end of the cycle, kill N%; then spawn child-copies of "fittest"
+;; -----------------------------------------------------------------------------
+;; [Vectorof Automaton] [Listof [0,1]] N -> [Listof Automaton]
+;; spawn a list of fittest automata
 
+;; Nguyen Linh Chi says: 
 ;; This procedure uses an independent Bernoulli draw. We independently
 ;; draw a random number (associated with an automaton) for 10 times. How
 ;; likely an automaton is chosen depends on its own fitness (its interval
 ;; in the unit scale of the accumulated percentages.)
 
 (module+ test
-  (define p0 (vector (automaton 0 1 't1)  (automaton 0 9 't1)))
-  (define p1 (list (automaton 0 9 't1)))
-  ;; this test case fails if (random) picks a number < .10
+  (define p0 (vector (automaton 0 1 't1)  (automaton 0 90 't1)))
+  (define p1 (list (automaton 0 90 't1)))
+  ;; this test case fails if (random) picks a number < .01
   (check-equal?
    (randomise-over-fitness p0 (payoff-percentages p0) 1)
-   (list (automaton 0 9 't1))))
+   (list (automaton 0 90 't1))))
 
-(define (randomise-over-fitness population fitness speed)
-  (define population* (vector->list population))
+(define (randomise-over-fitness population0 fitness speed)
+  (define p (vector->list population0))
   (for/list ([n (in-range speed)])
     [define r (random)]
-    ; (displayln r)
-    (let choose ([population* (rest population*)]
-                 [fitness fitness]
-                 [previous (first population*)])
+    (let find-first ([p (rest p)] [f fitness] [previous (first p)])
       (cond
-        [(empty? population*) previous]
-        [else
-         (define f (first fitness))
-         (define p (first population*))
-         (if (< r f)
-             p
-             (choose (rest population*) (rest fitness) p))]))))
+        [(empty? p) previous]
+        [else (if (< r (first f))
+                  (first p)
+                  (find-first (rest p) (rest f) (first p)))]))))
 
 ;; [Vectorof X] {Vectorof X] -> (cons [Vectorof X] [Vectorof X])
 ;; effect: shuffle vector b into vector a
