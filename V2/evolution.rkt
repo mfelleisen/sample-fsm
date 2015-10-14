@@ -14,5 +14,5 @@
     [(zero? cycles) '()]
     [else (define p2 (match-ups population rounds))
           (define p* (population-payoffs p2))
-          (cons (relative-average p* (sum p*))
+          (cons (relative-average p* rounds)
                 (evolve (death-birth p2 rate) (- cycles 1) rate rounds))]))
