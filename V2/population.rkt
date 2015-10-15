@@ -76,18 +76,18 @@
   (check-equal?
    (death-birth (cons (vector (automaton 0 1 't1)) (vector #false)) 1)
    (cons (vector (automaton 0 1 't1)) (vector (automaton 0 1 't1))))
-  
-  (check-equal?
-   (death-birth
-    (cons (vector (automaton 0 1 't1)  (automaton 0 9 't1))
-          (vector #false #false)) 1)
-   (cons (vector (automaton 0 9 't1) (automaton 0 9 't1))
-         (vector (automaton 0 9 't1) (automaton 0 9 't1)))))
 
-(define (death-birth population0 rate)
+  (define a2 (vector (automaton 0 1 't1)  (automaton 0 9 't1))) 
+  (define p2 (cons a2 a2))
+  (define ea (vector (automaton 0 9 't1) (automaton 0 9 't1)))
+  (define ep (cons ea ea))
+  
+  (check-equal? (death-birth p2 1 #:random .2) ep))
+
+(define (death-birth population0 rate #:random (q #false))
   (define population (car population0))
   ;; MF: why are we dropping the first 'speed'?
-  [define substitutes (randomise-over-fitness population rate)]
+  [define substitutes (randomise-over-fitness population rate #:random q)]
   (for ([i (in-range rate)][p (in-list substitutes)])
     (vector-set! population i p))
   (shuffle-vector population (cdr population0)))
@@ -107,15 +107,14 @@
 (module+ test
   (define p0 (vector (automaton 0 1 't1)  (automaton 0 90 't1)))
   (define p1 (list (automaton 0 90 't1)))
-  ;; this test case fails if (random) picks a number < .01
-  (check-equal?
-   (randomise-over-fitness p0 1) (list (automaton 0 90 't1))))
+  (check-equal? (randomise-over-fitness p0 1 #:random .2)
+                (list (automaton 0 90 't1))))
 
-(define (randomise-over-fitness a* speed)
+(define (randomise-over-fitness a* speed #:random (q #false))
   (define %s (payoff-%s a*))
   ;; (= (length fitness) (length population))
   (for/list ([n (in-range speed)])
-    [define r (random)]
+    [define r (or q (random))]
     ;; population is non-empty so there will be some p such that ... 
     (for/last ([p (in-vector a*)] [% (in-list %s)] #:final (< r %)) p)))
 
