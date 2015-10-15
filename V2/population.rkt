@@ -20,7 +20,7 @@
  ;; Population N -> Population
  ;; (match-ups p r) matches up neighboring pairs of
  ;; automata in population p for r rounds 
- match-ups
+ match-up*
  
  ;; Population N -> Population 
  ;; (death-birth p r) replaces r elements of p with r "children" of 
@@ -52,12 +52,12 @@
   (for/list ([a population]) (automaton-payoff a)))
 
 ;; -----------------------------------------------------------------------------
-(define (match-ups population0 rounds-per-match)
+(define (match-up* population0 rounds-per-match)
   (define population (car population0))
   ;; comment out this line if you want cummulative payoff histories:
   (for ([x population][i (in-naturals)]) (vector-set! population i (reset x)))
   ;; -- IN --
-  (for ([i (in-range (- (vector-length population) 1))])
+  (for ([i (in-range 0 (- (vector-length population) 1) 2)])
     (define p1 (vector-ref population i))
     (define p2 (vector-ref population (+ i 1)))
     (define-values (a1 a2) (match-up p1 p2 rounds-per-match))
@@ -73,13 +73,14 @@
 
 ;; -----------------------------------------------------------------------------
 (module+ test
+  (define a* (vector (automaton 0 0 1 't1)))
   (check-equal?
-   (death-birth (cons (vector (automaton 0 1 't1)) (vector #false)) 1)
-   (cons (vector (automaton 0 1 't1)) (vector (automaton 0 1 't1))))
+   (death-birth (cons a* a*) 1)
+   (cons (vector (automaton 0 0 0 't1)) (vector (automaton 0 0 0 't1))))
 
-  (define a2 (vector (automaton 0 1 't1)  (automaton 0 9 't1))) 
+  (define a2 (vector (automaton 0 0 1 't1)  (automaton 0 0 9 't1))) 
   (define p2 (cons a2 a2))
-  (define ea (vector (automaton 0 9 't1) (automaton 0 9 't1)))
+  (define ea (vector (automaton 0 0 0 't1) (automaton 0 0 9 't1)))
   (define ep (cons ea ea))
   
   (check-equal? (death-birth p2 1 #:random .2) ep))
@@ -89,7 +90,9 @@
   ;; MF: why are we dropping the first 'speed'?
   [define substitutes (randomise-over-fitness population rate #:random q)]
   (for ([i (in-range rate)][p (in-list substitutes)])
-    (vector-set! population i p))
+    ;; clone must change if we wanted to accumulate payoffs across cycles
+    ;; see above in match-ups
+    (vector-set! population i (clone p)))
   (shuffle-vector population (cdr population0)))
 
 ;; -----------------------------------------------------------------------------
@@ -105,10 +108,10 @@
 ;; in the unit scale of the accumulated percentages.)
 
 (module+ test
-  (define p0 (vector (automaton 0 1 't1)  (automaton 0 90 't1)))
-  (define p1 (list (automaton 0 90 't1)))
+  (define p0 (vector (automaton 0 0 1 't1)  (automaton 0 0 90 't1)))
+  (define p1 (list (automaton 0 0 90 't1)))
   (check-equal? (randomise-over-fitness p0 1 #:random .2)
-                (list (automaton 0 90 't1))))
+                (list (automaton 0 0 90 't1))))
 
 (define (randomise-over-fitness a* speed #:random (q #false))
   (define %s (payoff-%s a*))
@@ -123,13 +126,13 @@
 ;; from the matching result, calculate the accumulated fitness
 
 (module+ test
-  (check-equal? (payoff-%s (vector (automaton 0 1 't1)))
+  (check-equal? (payoff-%s (vector (automaton 0 0 1 't1)))
                 '(1.0))
   (check-equal? (payoff-%s
-                 (vector (automaton 0 2 't1) (automaton 0 2 't2)))
+                 (vector (automaton 0 0 2 't1) (automaton 0 0 2 't2)))
                 '(.5 1.0))
   (check-equal? (payoff-%s
-                 (vector (automaton 0 2 't1) (automaton 0 8 't2)))
+                 (vector (automaton 0 0 2 't1) (automaton 0 0 8 't2)))
                 '(.2 1.0)))
 
 (define (payoff-%s a*)

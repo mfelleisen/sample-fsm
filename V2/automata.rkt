@@ -18,6 +18,10 @@
  ;; give each automaton the reaction of the other in the current state
  ;; determine payoff for each and transition the automaton
  interact
+
+ ;; Automaton -> Automaton 
+ ;; create new automaton from given one (same original state)
+ clone 
  
  ;; Automaton -> Automaton 
  ;; wipe out the historic payoff
@@ -32,7 +36,7 @@
 (define COOPERATE 0)
 (define DEFECT    1)
 
-(struct automaton (current payoff table) #:transparent)
+(struct automaton (current original payoff table) #:transparent)
 ;; Automaton  = (automaton Payoff State Table)
 ;; Table      = [Vectorof n Transition])
 ;; Transition = [Vectorof k State]
@@ -44,7 +48,8 @@
   ;; [Any -> Transition]
   (define (make-transition _i)
     (build-vector k (lambda (_) (random n))))
-  (automaton (random n) 0 (build-vector n make-transition)))
+  (define original-current (random n))
+  (automaton original-current original-current 0 (build-vector n make-transition)))
 
 ;; -----------------------------------------------------------------------------
 ;; State Table -> Automaton
@@ -63,31 +68,39 @@
   (check-pred automaton? (make-automaton 0 t1)))
 
 (define (make-automaton current table)
-  (automaton current 0 table))
+  (automaton current current 0 table))
 
 ;; -----------------------------------------------------------------------------
 (module+ test
-  (check-equal? (reset (automaton 1 4 t2)) (automaton 1 0 t2)))
+  (check-equal? (reset (automaton 1 1 4 t2)) (automaton 1 1 0 t2)))
 
 (define (reset a)
-  (match-define (automaton current payoff table) a)
-  (automaton current 0 table))
+  (match-define (automaton current c0 payoff table) a)
+  (automaton current c0 0 table))
+
+;; -----------------------------------------------------------------------------
+(module+ test
+  (check-equal? (clone (automaton 1 0 4 t2)) (automaton 0 0 0 t2)))
+
+(define (clone a)
+  (match-define (automaton current c0 payoff table) a)
+  (automaton c0 c0 0 table))
 
 ;; -----------------------------------------------------------------------------
 (module+ test
   (check-equal? (let-values ([(b1 b2) (interact a1 a2)]) (list b1 b2))
                 (list
-                 (automaton 1 0 t1)
-                 (automaton 1 4 t2))))
+                 (automaton 1 DEFECT 0 t1)
+                 (automaton 1 COOPERATE 4 t2))))
 
 (define (interact a1 a2)
-  (match-define (automaton current1 payoff1 table1) a1)
-  (match-define (automaton current2 payoff2 table2) a2)
+  (match-define (automaton current1 c1 payoff1 table1) a1)
+  (match-define (automaton current2 c2 payoff2 table2) a2)
   (match-define (cons p1 p2) (payoff current1 current2))
   (define n1 (vector-ref (vector-ref table1 current1) current2))
   (define n2 (vector-ref (vector-ref table1 current1) current2))
-  (define next1 (automaton n1 (+ payoff1 p1) table1))
-  (define next2 (automaton n2 (+ payoff2 p2) table2))
+  (define next1 (automaton n1 c1 (+ payoff1 p1) table1))
+  (define next2 (automaton n2 c2 (+ payoff2 p2) table2))
   (values next1 next2))
 
 ;; -----------------------------------------------------------------------------
