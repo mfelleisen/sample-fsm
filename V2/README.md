@@ -92,10 +92,12 @@ and it resets their starting strategy to the initial one.
 Files 
 -----
 
-fsm0:       is the top-level file 
-evolution:  runs the complete simulation 
-population: a data representation for a population 
-automata:   a data representation for automata 
+file | purpose
+---- | --------
+fsm0 |       is the top-level file 
+evolution  |  runs the complete simulation 
+population | a data representation for a population 
+automata   |    a data representation for automata 
 
 Acknowledgment 
 --------------
