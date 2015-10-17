@@ -28,7 +28,7 @@ strategies: cooperate with others in interactions or defect. Each
 interaction of two individuals is evaluated according to the following
 matrix:
 
-| **		|  cooperate |  defect |
+| paypff matrix |  cooperate |  defect |
 | ------------- | ---------- | ------- |
 |cooperate  |     3,3    |    0,4  |
 |defect     |     4,0    |    1,1  |
@@ -61,10 +61,10 @@ Here are the transition matrices for three classical individuals:
   interaction. It switches back to a cooperative attitude after a
   cooperative interaction: 
 
-     *       | cooperate | defect 
------------- | --------- | ------------
- cooperate   | cooperate | defect
- defect      | cooperate | defect
+    *       | cooperate | defect 
+----------- | --------- | ------------
+ cooperate  | cooperate | defect
+ defect     | cooperate | defect
 
 
 Interpretation 
