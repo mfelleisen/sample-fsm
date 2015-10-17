@@ -1,5 +1,13 @@
 #! /usr/bin/env racket -tm
 #lang racket
+
+;; =============================================================================
+;; This version differs from Chi's in a couple of aspecs:
+;; -- it does not preserve the starting state over cycles
+;; -- it does not preserve the starting state when automata are cloned
+;; =============================================================================
+
+
 ;; INTRODUCTION
 ;; I generate a population of finite state automata randomly
 ;; in each cycle, they are pair-matched to play a repeated game
@@ -44,7 +52,10 @@
   (collect-garbage)
   (collect-garbage)
   (collect-garbage)
-  (plot (time (simulation->lines))))
+  (define ps (time (simulation->lines)))
+  (define h3 (function (lambda (x) 3) #:color "blue"))
+  (define h1 (function (lambda (x) 1) #:color "red"))
+  (plot (list h3 h1 ps) #:y-min 0.0 #:y-max 4.0))
 
 ;; -> [Listof [List Real Real]]
 (define (simulation->lines)
