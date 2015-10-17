@@ -13,7 +13,7 @@
  ;; (build-population n c) for even n, build a population of size n 
  ;; with c constraint: (even? n)
  build-random-population
-
+ 
  ;; Population -> [Listof Payoff]
  population-payoffs
  
@@ -33,7 +33,8 @@
 (require "automata.rkt" "utilities.rkt")
 
 (module+ test
-  (require rackunit))
+  (require rackunit)
+  (require  (submod "automata.rkt" test)))
 
 ;; Population = (Cons Automaton* Automaton*)
 ;; Automaton* = [Vectorof Automaton]
@@ -55,19 +56,27 @@
 (define (match-up* population0 rounds-per-match)
   (define population (car population0))
   ;; comment out this line if you want cummulative payoff histories:
+  ;; see below in birth-death
   (for ([x population][i (in-naturals)]) (vector-set! population i (reset x)))
   ;; -- IN --
   (for ([i (in-range 0 (- (vector-length population) 1) 2)])
     (define p1 (vector-ref population i))
     (define p2 (vector-ref population (+ i 1)))
-    (define-values (a1 a2) (match-up p1 p2 rounds-per-match))
+    (define-values (a1 a2) (match-pair p1 p2 rounds-per-match))
     (vector-set! population i a1)
     (vector-set! population (+ i 1) a2))
   population0)
 
 ;; Automata Automata N ->* Automata Automata
-;; the sum of pay-offs for the two respective automata over all rounds 
-(define (match-up auto1 auto2 rounds-per-match)
+;; the sum of pay-offs for the two respective automata over all rounds
+
+(module+ test
+  
+  (check-payoffs? (match-pair all-defects all-cooperates 10) 40 0)
+  (check-payoffs? (match-pair all-defects tit-for-tat 10) 13 9)
+  (check-payoffs? (match-pair tit-for-tat all-defects 10) 9 13))
+
+(define (match-pair auto1 auto2 rounds-per-match)
   (for/fold ([auto1 auto1] [auto2 auto2]) ([_ (in-range rounds-per-match)])
     (interact auto1 auto2)))
 
@@ -77,7 +86,7 @@
   (check-equal?
    (death-birth (cons a* a*) 1)
    (cons (vector (automaton 0 0 0 't1)) (vector (automaton 0 0 0 't1))))
-
+  
   (define a2 (vector (automaton 0 0 1 't1)  (automaton 0 0 9 't1))) 
   (define p2 (cons a2 a2))
   (define ea (vector (automaton 0 0 0 't1) (automaton 0 0 9 't1)))
