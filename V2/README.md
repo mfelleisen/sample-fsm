@@ -1,5 +1,3 @@
-# sample-fsm
-
 A Finite-state Simulation of Social-science Games
 =================================================
 
@@ -7,12 +5,15 @@ Running the simulation
 ----------------------
 
 To run five simulations in a row: 
+
     $ raco test fsm0.rkt 
 
 
 To run a single simulation: 
+
     $ racket -tm fsm0.rkt 
 or 
+
     $ chmod +x fsm0.rkt 
     $ ./fsm0.rkt 
 
@@ -27,10 +28,10 @@ strategies: cooperate with others in interactions or defect. Each
 interaction of two individuals is evaluated according to the following
 matrix:
 
-		|  cooperate |  defect
-    ------------------------------------
-    cooperate   |     3,3    |    0,4
-    defect      |     4,0    |    1,1
+| **		|  cooperate |  defect |
+| ------------- | ---------- | ------- |
+|cooperate  |     3,3    |    0,4  |
+|defect     |     4,0    |    1,1  |
 
 That is, when a defecting individual meets on a cooperating one, the former
 receives four "credits" and the latter none. After an interaction is done,
@@ -42,28 +43,28 @@ Here are the transition matrices for three classical individuals:
 * the selfless individual starts with the cooperative strategy
   and sticks to it, no matter what the other individual does: 
  
-                | cooperate | defect 
-  -------------------------------------
-    cooperate   | cooperate | cooperate
-    defect      | cooperate | cooperate
+      *        | cooperate | defect 
+------------- -| --------- | ---------
+   cooperate   | cooperate | cooperate
+   defect      | cooperate | cooperate
 
 * the self-interested individual starts with the defecting strategy
   and sticks to it, no matter what the other individual does: 
 
-                | cooperate | defect 
-  -------------------------------------
-    cooperate   |   defect  | defect
-    defect      |   defect  | defect
+      *      | cooperate | defect 
+------------ | --------- | ------------
+ cooperate   |   defect  | defect
+ defect      |   defect  | defect
 
 * the tit-for-tat individual starts with the cooperative strategy
   but switches to defective if some individual defects during an
   interaction. It switches back to a cooperative attitude after a
   cooperative interaction: 
 
-                | cooperate | defect 
-  -------------------------------------
-    cooperate   | cooperate | defect
-    defect      | cooperate | defect
+     *       | cooperate | defect 
+------------ | --------- | ------------
+ cooperate   | cooperate | defect
+ defect      | cooperate | defect
 
 
 Interpretation 
