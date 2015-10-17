@@ -43,10 +43,10 @@ Here are the transition matrices for three classical individuals:
 * the selfless individual starts with the cooperative strategy
   and sticks to it, no matter what the other individual does: 
  
-      *        | cooperate | defect 
-------------- -| --------- | ---------
-   cooperate   | cooperate | cooperate
-   defect      | cooperate | cooperate
+      *       | cooperate | defect 
+------------- | --------- | ---------
+   cooperate  | cooperate | cooperate
+   defect     | cooperate | cooperate
 
 * the self-interested individual starts with the defecting strategy
   and sticks to it, no matter what the other individual does: 
