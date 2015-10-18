@@ -53,12 +53,13 @@
 (define DEFECT    1)
 
 (struct automaton (current original payoff table) #:transparent)
-;; Automaton  = (automaton Payoff State Table)
 ;; Table      = [Vectorof n Transition])
-;; Transition = [Vectorof k State]
+;; Transition = [Vectorof n State]
+;;            ~ [Vectorof [Input --> State]]
+;;            ~ [State -> [Input --> State]]
 ;; State      = [0,n)
-;; Input      = [0,k)
-;; Payoff      = N
+;; Input      = [0,n)
+;; Payoff     = N
 
 (define (make-random-automaton n)
   ;; [Any -> Transition]
@@ -93,10 +94,6 @@
           (vector dc dd)))
 
 ;; CLASSIC AUTOMATA
-;; the all defector has 2 states of cooperate and defect
-;; but it always defects, no matter what
-;; the opponent may play cooperate or defect
-;; it doesnt care, it always stay in the state defect
 
 (define defect-transitions
   (transitions #:i-cooperate/it-cooperates DEFECT 
@@ -116,10 +113,6 @@
 (define (cooperates p0)
   (automaton COOPERATE COOPERATE p0 cooperates-transitions))
 
-;; the tit for tat starts out optimistic, it cooperates initially
-;; however, if the opponent defects, it punishes by switching to defecting
-;; if the opponent cooperates, it returns to play cooperate again
-
 (define tit-for-tat-transitions
   (transitions #:i-cooperate/it-cooperates COOPERATE 
                #:i-cooperate/it-defects    DEFECT
@@ -129,11 +122,6 @@
   
 (define (tit-for-tat p0)
   (automaton COOPERATE COOPERATE p0 tit-for-tat-transitions))
-
-;; the grim trigger also starts out optimistic,
-;; but the opponent defects for just once then
-;; it jumps to defect forever
-;; it doesnt forgive, and doesnt forget
 
 (define grim-transitions
   (transitions #:i-cooperate/it-cooperates COOPERATE 
