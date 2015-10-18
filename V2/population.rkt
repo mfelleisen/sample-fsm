@@ -1,10 +1,6 @@
 #lang racket
 
-; evolution: pair of neighbors against each other, collect payoffs per round
-; main: plot payoffs
-
-;; -----------------------------------------------------------------------------
-;; Populations of Automata where Each Carries its Life Time Payoff  
+;; Populations of Automata
 
 (provide
  ;; type Population
@@ -24,12 +20,11 @@
  
  ;; Population N -> Population 
  ;; (death-birth p r) replaces r elements of p with r "children" of 
- ;; randomly picked fittest elements of p
+ ;; randomly chosen fittest elements of p, also shuffle 
  ;; constraint (< r (length p))
  death-birth)
 
-;; ---------------------------------------------------------------------------------------------------
-
+;; =============================================================================
 (require "automata.rkt" "utilities.rkt")
 
 (module+ test
@@ -38,13 +33,12 @@
 
 ;; Population = (Cons Automaton* Automaton*)
 ;; Automaton* = [Vectorof Automaton]
-;; the first vector carries the current "citizens", death-birth switches the two 
 
 (define DEF-COO 2)
 
 ;; -----------------------------------------------------------------------------
 (define (build-random-population n)
-  (define v (build-vector n (lambda (_) (make-random-automaton DEF-COO DEF-COO))))
+  (define v (build-vector n (lambda (_) (make-random-automaton DEF-COO))))
   (cons v v))
 
 ;; -----------------------------------------------------------------------------
@@ -53,11 +47,32 @@
   (for/list ([a population]) (automaton-payoff a)))
 
 ;; -----------------------------------------------------------------------------
+(module+ test
+  (define a1 (vector (defects 0) (cooperates 40)))
+  (define p1 (cons a1 a1))
+  (define e1 (vector (defects 40) (cooperates 0)))
+  (define p1-expected (cons e1 a1))
+  
+  (define a2 (vector (defects 0) (tit-for-tat 0)))
+  (define p2 (cons a2 a2))
+  (define e2 (vector (defects 13) (tit-for-tat 9)))
+  (define p2-expected (cons e2 a2))
+  
+  (define a3 (vector (tit-for-tat 0) (defects 0)))
+  (define p3 (cons a3 a3))
+  (define e3 (vector (tit-for-tat 9) (defects 13)))
+  (define p3-expected (cons e3 a3))
+
+  ;; these don't work because the population changes 
+  ; (check-euqal? (match-up* p2 10) p2-expected)
+  ; (check-equal? (match-up* p3 10) p3-expected)  
+  (check-equal? (match-up* p1 10) p1-expected))
+
 (define (match-up* population0 rounds-per-match)
   (define population (car population0))
   ;; comment out this line if you want cummulative payoff histories:
   ;; see below in birth-death
-  (for ([x population][i (in-naturals)]) (vector-set! population i (reset x)))
+  (population-reset population)
   ;; -- IN --
   (for ([i (in-range 0 (- (vector-length population) 1) 2)])
     (define p1 (vector-ref population i))
@@ -71,90 +86,44 @@
 ;; the sum of pay-offs for the two respective automata over all rounds
 
 (module+ test
-  
-  (check-payoffs? (match-pair all-defects all-cooperates 10) 40 0)
-  (check-payoffs? (match-pair all-defects tit-for-tat 10) 13 9)
-  (check-payoffs? (match-pair tit-for-tat all-defects 10) 9 13))
+  (check-payoffs? (match-pair (defects 0) (cooperates 0) 10) 40 0)
+  (check-payoffs? (match-pair (defects 0) (tit-for-tat 0) 10) 13 9)
+  (check-payoffs? (match-pair (tit-for-tat 0) (defects 0) 10) 9 13))
 
 (define (match-pair auto1 auto2 rounds-per-match)
   (for/fold ([auto1 auto1] [auto2 auto2]) ([_ (in-range rounds-per-match)])
     (interact auto1 auto2)))
 
+;; Automaton* -> Void
+;; effec: reset all automata in a*
+(define (population-reset a*)
+  (for ([x a*][i (in-naturals)]) (vector-set! a* i (automaton-reset x))))
+
 ;; -----------------------------------------------------------------------------
 (module+ test
-  (define a* (vector (automaton 0 0 1 't1)))
-  (check-equal?
-   (death-birth (cons a* a*) 1)
-   (cons (vector (automaton 0 0 0 't1)) (vector (automaton 0 0 0 't1))))
+  (define a* (vector (cooperates 1)))
+  (define p* (cons a* a*))
+  (check-equal? (death-birth p* 1) p*)
+
+  (define a20 (vector (cooperates 1)  (cooperates 9)))
+  (define p20 (cons a20 a20))
   
-  (define a2 (vector (automaton 0 0 1 't1)  (automaton 0 0 9 't1))) 
-  (define p2 (cons a2 a2))
-  (define ea (vector (automaton 0 0 0 't1) (automaton 0 0 9 't1)))
-  (define ep (cons ea ea))
-  
-  (check-equal? (death-birth p2 1 #:random .2) ep))
+  (check-pred
+   (match-lambda 
+     [(cons a* b*)
+      (member a* (list (vector (cooperates 0) (cooperates 9))
+                       (vector (cooperates 9) (cooperates 0))))])
+   (death-birth p20 1 #:random .2)))
 
 (define (death-birth population0 rate #:random (q #false))
-  (define population (car population0))
-  ;; MF: why are we dropping the first 'speed'?
-  [define substitutes (randomise-over-fitness population rate #:random q)]
-  (for ([i (in-range rate)][p (in-list substitutes)])
-    ;; clone must change if we wanted to accumulate payoffs across cycles
-    ;; see above in match-ups
-    (vector-set! population i (clone p)))
-  (shuffle-vector population (cdr population0)))
-
-;; -----------------------------------------------------------------------------
-;; Automaton* N -> [Listof Automaton]
-;; (randomise-over-fitness v n) spawn a list of n automata
-;; the probabiliy of choosing automaton i is directly proportionally
-;; to its payoff relative to the overall payoff for the entire population
-
-;; Nguyen Linh Chi says: 
-;; This procedure uses an independent Bernoulli draw. We independently
-;; draw a random number (associated with an automaton) for 10 times. How
-;; likely an automaton is chosen depends on its own fitness (its interval
-;; in the unit scale of the accumulated percentages.)
-
-(module+ test
-  (define p0 (vector (automaton 0 0 1 't1)  (automaton 0 0 90 't1)))
-  (define p1 (list (automaton 0 0 90 't1)))
-  (check-equal? (randomise-over-fitness p0 1 #:random .2)
-                (list (automaton 0 0 90 't1))))
-
-(define (randomise-over-fitness a* speed #:random (q #false))
-  (define %s (payoff-%s a*))
-  ;; (= (length fitness) (length population))
-  (for/list ([n (in-range speed)])
-    [define r (or q (random))]
-    ;; population is non-empty so there will be some p such that ... 
-    (for/last ([p (in-vector a*)] [% (in-list %s)] #:final (< r %)) p)))
-
-;; -----------------------------------------------------------------------------
-;; Automata* -> [Listof [0,1]]
-;; from the matching result, calculate the accumulated fitness
-
-(module+ test
-  (check-equal? (payoff-%s (vector (automaton 0 0 1 't1)))
-                '(1.0))
-  (check-equal? (payoff-%s
-                 (vector (automaton 0 0 2 't1) (automaton 0 0 2 't2)))
-                '(.5 1.0))
-  (check-equal? (payoff-%s
-                 (vector (automaton 0 0 2 't1) (automaton 0 0 8 't2)))
-                '(.2 1.0)))
-
-(define (payoff-%s a*)
+  (match-define (cons a* b*) population0)
   (define payoffs (for/list ([x (in-vector a*)]) (automaton-payoff x)))
-  (define total (sum payoffs))
-  (let relative->absolute ([payoffs payoffs][so-far #i0.0])
-    (cond
-      [(empty? payoffs) '()]
-      [else (define nxt (+ so-far (first payoffs)))
-            (cons (/ nxt total) (relative->absolute (rest payoffs) nxt))])))
+  [define substitutes (choose-randomly payoffs rate #:random q)]
+  (for ([i (in-range rate)][p (in-list substitutes)])
+    (vector-set! a* i (clone (vector-ref b* p))))
+  (shuffle-vector a* b*))
 
-;; -----------------------------------------------------------------------------
-;; Automata* -> (cons Automata* Automata*)
+;; Automata* Automata* -> (cons Automata* Automata*)
 ;; effect: shuffle vector b into vector a
 ;; constraint: (= (vector-length a) (vector-length b))
 ;; Fisher-Yates Shuffle

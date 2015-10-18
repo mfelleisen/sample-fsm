@@ -1,15 +1,16 @@
 #lang racket
 
+;; An N-states, N-inputs Automaton
+
 (provide
  ;; type Automaton
- automaton
+ ;; type Payoff = N 
  
- all-defects
- all-cooperates
+ ;; Payoff -> Automaton 
+ defects
+ cooperates
  tit-for-tat
  grim-trigger
- 
- ;; type Payoff = N 
  
  ;; Automaton -> Payoff 
  automaton-payoff 
@@ -30,11 +31,9 @@
  
  ;; Automaton -> Automaton 
  ;; wipe out the historic payoff
- reset)
+ automaton-reset)
 
-;; -----------------------------------------------------------------------------
-;; Representing Automata with n States that can React to k Inputs
-
+;; =============================================================================
 (module+ test
   (provide
    ;; syntax: (check-payoffs? actual expected1 expected2)
@@ -49,6 +48,7 @@
                     (list (automaton-payoff auto1) (automaton-payoff auto2)))
                   (list expected1 expected2))))
 
+;; -----------------------------------------------------------------------------
 (define COOPERATE 0)
 (define DEFECT    1)
 
@@ -60,12 +60,11 @@
 ;; Input      = [0,k)
 ;; Payoff      = N
 
-(define (make-random-automaton n k)
+(define (make-random-automaton n)
   ;; [Any -> Transition]
-  (define (make-transition _i)
-    (build-vector k (lambda (_) (random n))))
+  (define (transitions _i) (build-vector n (lambda (_) (random n))))
   (define original-current (random n))
-  (automaton original-current original-current 0 (build-vector n make-transition)))
+  (automaton original-current original-current 0 (build-vector n transitions)))
 
 ;; -----------------------------------------------------------------------------
 ;; State Table -> Automaton
@@ -86,43 +85,70 @@
 (define (make-automaton current table)
   (automaton current current 0 table))
 
+(define (transitions #:i-cooperate/it-cooperates cc
+                     #:i-cooperate/it-defects    cd
+                     #:i-defect/it-cooperates    dc
+                     #:i-defect/it-defects       dd)
+  (vector (vector cc cd)
+          (vector dc dd)))
+
 ;; CLASSIC AUTOMATA
 ;; the all defector has 2 states of cooperate and defect
 ;; but it always defects, no matter what
 ;; the opponent may play cooperate or defect
 ;; it doesnt care, it always stay in the state defect
-(define all-defects
-  (make-automaton
-   DEFECT
-   (vector (vector DEFECT DEFECT) (vector DEFECT DEFECT))))
 
-(define all-cooperates
-  (make-automaton
-   COOPERATE
-   (vector (vector COOPERATE COOPERATE) (vector COOPERATE COOPERATE))))
+(define defect-transitions
+  (transitions #:i-cooperate/it-cooperates DEFECT 
+               #:i-cooperate/it-defects    DEFECT
+               #:i-defect/it-cooperates    DEFECT
+               #:i-defect/it-defects       DEFECT))
+
+(define (defects p0)
+  (automaton DEFECT DEFECT p0 defect-transitions))
+
+(define cooperates-transitions
+  (transitions #:i-cooperate/it-cooperates COOPERATE 
+               #:i-cooperate/it-defects    COOPERATE
+               #:i-defect/it-cooperates    COOPERATE
+               #:i-defect/it-defects       COOPERATE))
+
+(define (cooperates p0)
+  (automaton COOPERATE COOPERATE p0 cooperates-transitions))
 
 ;; the tit for tat starts out optimistic, it cooperates initially
 ;; however, if the opponent defects, it punishes by switching to defecting
 ;; if the opponent cooperates, it returns to play cooperate again
-(define tit-for-tat
-  (make-automaton
-   COOPERATE
-   (vector (vector COOPERATE DEFECT) (vector COOPERATE DEFECT))))
+
+(define tit-for-tat-transitions
+  (transitions #:i-cooperate/it-cooperates COOPERATE 
+               #:i-cooperate/it-defects    DEFECT
+               #:i-defect/it-cooperates    COOPERATE
+               #:i-defect/it-defects       DEFECT))
+
+  
+(define (tit-for-tat p0)
+  (automaton COOPERATE COOPERATE p0 tit-for-tat-transitions))
 
 ;; the grim trigger also starts out optimistic,
 ;; but the opponent defects for just once then
 ;; it jumps to defect forever
 ;; it doesnt forgive, and doesnt forget
-(define grim-trigger
-  (make-automaton
-   COOPERATE
-   (vector (vector COOPERATE DEFECT) (vector DEFECT DEFECT))))
+
+(define grim-transitions
+  (transitions #:i-cooperate/it-cooperates COOPERATE 
+               #:i-cooperate/it-defects    DEFECT
+               #:i-defect/it-cooperates    DEFECT
+               #:i-defect/it-defects       DEFECT))
+  
+(define (grim-trigger p0)
+  (automaton COOPERATE COOPERATE p0 grim-transitions))
 
 ;; -----------------------------------------------------------------------------
 (module+ test
-  (check-equal? (reset (automaton 1 1 4 t2)) (automaton 1 1 0 t2)))
+  (check-equal? (automaton-reset (automaton 1 1 4 t2)) (automaton 1 1 0 t2)))
 
-(define (reset a)
+(define (automaton-reset a)
   (match-define (automaton current c0 payoff table) a)
   (automaton c0 c0 0 table))
 
@@ -144,14 +170,14 @@
                  (automaton DEFECT DEFECT    4 t1)
                  (automaton DEFECT COOPERATE 0 t2)))
   
-  (check-payoffs? (interact all-defects all-cooperates) 4 0)
+  (check-payoffs? (interact (defects 0) (cooperates 0)) 4 0)
   (check-payoffs?
-   (for/fold ([auto1 all-defects] [auto2 all-cooperates]) ([_ (in-range 2)])
+   (for/fold ([auto1 (defects 0)] [auto2 (cooperates 0)]) ([_ (in-range 2)])
      (interact auto1 auto2))
    8
    0)
-  (check-payoffs? (interact all-defects tit-for-tat) 4 0)
-  (check-payoffs? (interact tit-for-tat all-defects) 0 4))
+  (check-payoffs? (interact (defects 0) (tit-for-tat 0)) 4 0)
+  (check-payoffs? (interact (tit-for-tat 0) (defects 0)) 0 4))
 
 (define (interact a1 a2)
   (match-define (automaton current1 c1 payoff1 table1) a1)

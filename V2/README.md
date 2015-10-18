@@ -6,7 +6,7 @@ Running the simulation
 
 To run five simulations in a row: 
 
-    $ raco test fsm0.rkt 
+    $ raco test -s five fsm0.rkt 
 
 
 To run a single simulation: 
