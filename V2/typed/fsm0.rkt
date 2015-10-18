@@ -3,8 +3,11 @@
 
 ;; Run a Simulation of Interacting Automata
 
-(: main (-> (U Void (Instance Snip%))))
-(provide main)
+(require "type-utility.rkt")
+
+(provide/type
+ (main (-> (U Void (Instance Snip%)))))
+
 
 ;; =============================================================================
 (require "population.rkt" "utilities.rkt" plot)
@@ -34,8 +37,6 @@
       (list n d)))
   (lines coors))
 
-
-
 (: evolve (-> Population Natural Natural Natural [Listof Payoff]))
 ;; computes the list of average payoffs over the evolution of population p for
 ;; c cycles of of match-ups with r rounds per match and at birth/death rate of s
@@ -52,7 +53,6 @@
            ;; Note: evolve is assigned (-> ... [Listof Probability])
            ;; even though it is explicitly typed ... [Listof Payoff]
            (evolve p3 (- c 1) s r))]))
-
 
 ;; -----------------------------------------------------------------------------
 (module+ five

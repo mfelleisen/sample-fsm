@@ -5,21 +5,14 @@
 (define-type Probability Nonnegative-Real)
 ;; constraint [0,1]
 
-(: sum (-> [Listof Real] Real))
-(: relative-average (-> [Listof Real] Real Real))
-(: choose-randomly
-   (-> [Listof Probability] Natural [#:random (U False Real)] [Listof Natural]))
+(require "type-utility.rkt")
 
-(provide
- Probability
-
- sum
-
- relative-average
- 
- ;; choose n random indices i such i's likelihood is (list-ref probabilities i)
- ;; (choose-randomly l) = (list i_1 ...) implies i_j is in [0,(length l))
- choose-randomly)
+(provide Probability)
+(provide/type
+ (sum (-> [Listof Real] Real))
+ (relative-average (-> [Listof Real] Real Real))
+ (choose-randomly
+  (-> [Listof Probability] Natural [#:random (U False Real)] [Listof Natural])))
 
 ;; =============================================================================
 (module+ test

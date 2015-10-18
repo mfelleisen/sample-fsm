@@ -2,32 +2,30 @@
 
 ;; Populations of Automata
 
+(require "type-utility.rkt")
+
 (define-type Population (cons Automaton* Automaton*))
 (define-type Automaton* [Vectorof Automaton])
 
-(: build-random-population (-> Natural Population))
-(: population-payoffs (-> Population [Listof Payoff]))
-(: match-up* (-> Population Natural Population))
-(: death-birth (-> Population Natural [#:random (U False Real)] Population))
+(provide/type
+ (build-random-population
+  ;; (build-population n c) for even n, build a population of size n 
+  ;; with c constraint: (even? n)
+  (-> Natural Population))
+ (population-payoffs (-> Population [Listof Payoff]))
+ (match-up*
+  ;; (match-ups p r) matches up neighboring pairs of
+  ;; automata in population p for r rounds 
+  (-> Population Natural Population))
+ (death-birth
+  ;; (death-birth p r) replaces r elements of p with r "children" of 
+  ;; randomly chosen fittest elements of p, also shuffle 
+  ;; constraint (< r (length p))
+  (-> Population Natural [#:random (U False Real)] Population)))
 
 (provide
  Payoff
- Population
- 
- ;; (build-population n c) for even n, build a population of size n 
- ;; with c constraint: (even? n)
- build-random-population
- 
- population-payoffs
- 
- ;; (match-ups p r) matches up neighboring pairs of
- ;; automata in population p for r rounds 
- match-up*
- 
- ;; (death-birth p r) replaces r elements of p with r "children" of 
- ;; randomly chosen fittest elements of p, also shuffle 
- ;; constraint (< r (length p))
- death-birth)
+ Population)
 
 ;; =============================================================================
 (require "automata.rkt" "utilities.rkt")
@@ -67,7 +65,7 @@
   (define p3 (cons a3 a3))
   (define e3 (vector (tit-for-tat 9) (defects 13)))
   (define p3-expected (cons e3 a3))
-
+  
   ;; these don't work because the population changes 
   ; (check-euqal? (match-up* p2 10) p2-expected)
   ; (check-equal? (match-up* p3 10) p3-expected)  
@@ -111,7 +109,7 @@
   (define a* (vector (cooperates 1)))
   (define p* (cons a* a*))
   (check-equal? (death-birth p* 1) p*)
-
+  
   (define a20 (vector (cooperates 1)  (cooperates 9)))
   (define p20 (cons a20 a20))
   

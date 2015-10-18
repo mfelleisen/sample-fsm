@@ -2,44 +2,36 @@
 
 ;; An N-states, N-inputs Automaton
 
+(require "type-utility.rkt")
+
 (define-type Automaton automaton)
 (define-type Payoff Nonnegative-Real)
 
-(: defects (-> Payoff Automaton))
-(: cooperates (-> Payoff Automaton))
-(: tit-for-tat (-> Payoff Automaton))
-(: grim-trigger (-> Payoff Automaton))
-
-(: make-random-automaton (-> Natural Automaton))
-
-(: interact (-> Automaton Automaton (values Automaton Automaton)))
-(: automaton-reset (-> Automaton Automaton))
-(: clone (-> Automaton Automaton))
+(provide/type
+ (defects (-> Payoff Automaton))
+ (cooperates (-> Payoff Automaton))
+ (tit-for-tat (-> Payoff Automaton))
+ (grim-trigger (-> Payoff Automaton))
+ (make-random-automaton
+  ;; (make-random-automaton n) builds an n states x n inputs automaton
+  ;; with a random transition table 
+  (-> Natural Automaton))
+ 
+ (interact
+  ;; give each automaton the reaction of the other in the current state
+  ;; determine payoff for each and transition the automaton
+  (-> Automaton Automaton (values Automaton Automaton)))
+ (automaton-reset
+  ;; wipe out the historic payoff, set back to original state
+  (-> Automaton Automaton))
+ (clone
+  ;; create new automaton from given one (same original state)
+  (-> Automaton Automaton)))
 
 (provide
+ automaton-payoff
  Automaton
- Payoff
-
- defects
- cooperates
- tit-for-tat
- grim-trigger
- 
- automaton-payoff 
- 
- ;; (make-random-automaton n) builds an n states x n inputs automaton
- ;; with a random transition table 
- make-random-automaton
- 
-  ;; give each automaton the reaction of the other in the current state
- ;; determine payoff for each and transition the automaton
- interact
- 
- ;; create new automaton from given one (same original state)
- clone 
- 
- ;; wipe out the historic payoff
- automaton-reset)
+ Payoff)
 
 ;; =============================================================================
 (module+ test
@@ -145,7 +137,7 @@
                #:i-defect/it-cooperates    COOPERATE
                #:i-defect/it-defects       DEFECT))
 
-  
+
 (define (tit-for-tat p0)
   (automaton COOPERATE COOPERATE p0 tit-for-tat-transitions))
 
