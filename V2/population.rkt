@@ -82,18 +82,6 @@
     (vector-set! population (+ i 1) a2))
   population0)
 
-;; Automata Automata N ->* Automata Automata
-;; the sum of pay-offs for the two respective automata over all rounds
-
-(module+ test
-  (check-payoffs? (match-pair (defects 0) (cooperates 0) 10) 40 0)
-  (check-payoffs? (match-pair (defects 0) (tit-for-tat 0) 10) 13 9)
-  (check-payoffs? (match-pair (tit-for-tat 0) (defects 0) 10) 9 13))
-
-(define (match-pair auto1 auto2 rounds-per-match)
-  (for/fold ([auto1 auto1] [auto2 auto2]) ([_ (in-range rounds-per-match)])
-    (interact auto1 auto2)))
-
 ;; Automaton* -> Void
 ;; effec: reset all automata in a*
 (define (population-reset a*)
