@@ -86,18 +86,17 @@
       (super-new)
       
       (define/public (match-pair other r)
-        (cond
-          [(= r 0) (values this other)]
-          [else
-           (define other-current (get-field current other))
-           (match-define (cons p1 p2) (compute-payoffs other-current))
-           (define next (send this jump other-current p1))
-           (send next match-pair (send other jump current p2) (- r 1))]))
-
+        (for ([_i (in-range r)])
+          (define input (get-field current other))
+          (match-define (cons p1 p2) (compute-payoffs input))
+          (jump input p1)
+          (send other jump current p2))
+        (values this other))
+      
+      ;; State Payoff -> Void
       (define/public (jump input delta) ;; <--- should be friendly
-        (define n (vector-ref (vector-ref table current) input))
-        (define p (+ payoff delta))
-        (new automaton% [current n][original original][payoff p][table table]))
+        (set! current (vector-ref (vector-ref table current) input))
+        (set! payoff (+ payoff delta)))
       
       (define/public (pay)
         payoff)
