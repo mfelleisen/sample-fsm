@@ -182,41 +182,19 @@
   (check-payoffs? (match-pair (tit-for-tat 0) (defects 0) 10) 9 13))
 
 (define (match-pair auto1 auto2 rounds-per-match)
-  (for/fold ([auto1 : Automaton auto1] [auto2 : Automaton auto2])
-            ([_ (in-range rounds-per-match)])
-    (interact auto1 auto2)))
-
-;; -----------------------------------------------------------------------------
-(: interact (-> Automaton Automaton (values Automaton Automaton)))
-(module+ test
-  (check-equal? (let-values ([(b1 b2) (interact
-                                       observably-equivalent-to-all-defects
-                                       observably-equivalent-to-tit-for-tat)])
-                  (list b1 b2))
-                (list
-                 (automaton DEFECT DEFECT    4 t1)
-                 (automaton DEFECT COOPERATE 0 t2)))
-  
-  (check-payoffs? (interact (defects 0) (cooperates 0)) 4 0)
-  (check-payoffs?
-   (for/fold ([auto1 : Automaton (defects 0)]
-              [auto2 : Automaton (cooperates 0)])
-             ([_ (in-range 2)])
-     (interact auto1 auto2))
-   8
-   0)
-  (check-payoffs? (interact (defects 0) (tit-for-tat 0)) 4 0)
-  (check-payoffs? (interact (tit-for-tat 0) (defects 0)) 0 4))
-
-(define (interact a1 a2)
-  (match-define (automaton current1 c1 payoff1 table1) a1)
-  (match-define (automaton current2 c2 payoff2 table2) a2)
-  (match-define (cons p1 p2) (payoff current1 current2))
-  (define n1 (vector-ref (vector-ref table1 current1) current2))
-  (define n2 (vector-ref (vector-ref table2 current2) current1))
-  (define next1 (automaton n1 c1 (+ payoff1 p1) table1))
-  (define next2 (automaton n2 c2 (+ payoff2 p2) table2))
-  (values next1 next2))
+  (match-define (automaton current1 c1 payoff1 table1) auto1)
+  (match-define (automaton current2 c2 payoff2 table2) auto2)
+  (define-values (new1 p1 new2 p2)
+    (for/fold ([current1 : State current1]
+               [payoff1 : Payoff payoff1]
+               [current2 : State current2]
+               [payoff2 : Payoff payoff2])
+              ([_ (in-range rounds-per-match)])
+      (match-define (cons p1 p2) (payoff current1 current2))
+      (define n1 (vector-ref (vector-ref table1 current1) current2))
+      (define n2 (vector-ref (vector-ref table2 current2) current1))
+      (values n1 (+ payoff1 p1) n2 (+ payoff2 p2))))
+  (values (automaton new1 c1 p1 table1) (automaton new2 c2 p2 table2)))
 
 ;; -----------------------------------------------------------------------------
 ;; PayoffTable = [Vectorof k [Vectorof k (cons Payoff Payoff)]]
