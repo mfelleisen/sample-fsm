@@ -8,7 +8,7 @@
                [payoff Payoff] 
                [table Transition*] 
                [original State #:optional])
-   [match-pair
+   [interact
     ;; the sum of pay-offs for the two respective automata over all rounds
     (-> oAutomaton Natural (values oAutomaton oAutomaton))]
    [jump
@@ -89,7 +89,7 @@
        (original current))
       (super-new)
       
-      (define/public (match-pair other r)
+      (define/public (interact other r)
         (for ([_i : Natural (in-range r)])
           (define input (get-field current other))
           (match-define (cons p1 p2) (compute-payoffs input))
@@ -215,6 +215,6 @@
   
   (define d0 (defects 0))
   (define c0 (cooperates 0))
-  (check-payoffs? (send d0 match-pair c0 10) 40 0)
-  (check-payoffs? (send (defects 0) match-pair (tit-for-tat 0) 10) 13 9)
-  (check-payoffs? (send (tit-for-tat 0) match-pair (defects 0) 10) 9 13))
+  (check-payoffs? (send d0 interact c0 10) 40 0)
+  (check-payoffs? (send (defects 0) interact (tit-for-tat 0) 10) 13 9)
+  (check-payoffs? (send (tit-for-tat 0) interact (defects 0) 10) 9 13))

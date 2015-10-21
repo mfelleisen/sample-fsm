@@ -21,7 +21,7 @@
  make-random-automaton
  
  ;; Automaton Automaton N -> Automaton Automaton
- match-pair
+ interact
  
  ;; Automaton -> Automaton 
  ;; create new automaton from given one (same original state)
@@ -151,11 +151,11 @@
 ;; the sum of pay-offs for the two respective automata over all rounds
 
 (module+ test
-  (check-payoffs? (match-pair (defects 0) (cooperates 0) 10) 40 0)
-  (check-payoffs? (match-pair (defects 0) (tit-for-tat 0) 10) 13 9)
-  (check-payoffs? (match-pair (tit-for-tat 0) (defects 0) 10) 9 13))
+  (check-payoffs? (interact (defects 0) (cooperates 0) 10) 40 0)
+  (check-payoffs? (interact (defects 0) (tit-for-tat 0) 10) 13 9)
+  (check-payoffs? (interact (tit-for-tat 0) (defects 0) 10) 9 13))
 
-(define (match-pair auto1 auto2 rounds-per-match)
+(define (interact auto1 auto2 rounds-per-match)
   (match-define (automaton current1 c1 payoff1 table1) auto1)
   (match-define (automaton current2 c2 payoff2 table2) auto2)
   (define-values (new1 p1 new2 p2)

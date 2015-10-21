@@ -4,7 +4,7 @@
 
 ;; type  Automaton = 
 ;;   Class
-;;      [match-pair (-> Automata N (values Automata Automata))
+;;      [interact (-> Automata N (values Automata Automata))
 ;;      the sum of pay-offs for the two respective automata over all rounds
 ;; 
 ;;     [interact (-> Automaton (values Automaton Automaton))]
@@ -85,7 +85,7 @@
        (original current))
       (super-new)
       
-      (define/public (match-pair other r)
+      (define/public (interact other r)
         (for ([_i (in-range r)])
           (define input (get-field current other))
           (match-define (cons p1 p2) (compute-payoffs input))
@@ -205,6 +205,6 @@
    1)
   
   
-  (check-payoffs? (send (defects 0) match-pair (cooperates 0) 10) 40 0)
-  (check-payoffs? (send (defects 0) match-pair (tit-for-tat 0) 10) 13 9)
-  (check-payoffs? (send (tit-for-tat 0) match-pair (defects 0) 10) 9 13))
+  (check-payoffs? (send (defects 0) interact (cooperates 0) 10) 40 0)
+  (check-payoffs? (send (defects 0) interact (tit-for-tat 0) 10) 13 9)
+  (check-payoffs? (send (tit-for-tat 0) interact (defects 0) 10) 9 13))

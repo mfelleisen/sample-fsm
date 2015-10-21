@@ -77,7 +77,7 @@
   (for ([i (in-range 0 (- (vector-length population) 1) 2)])
     (define p1 (vector-ref population i))
     (define p2 (vector-ref population (+ i 1)))
-    (define-values (a1 a2) (match-pair p1 p2 rounds-per-match))
+    (define-values (a1 a2) (interact p1 p2 rounds-per-match))
     (vector-set! population i a1)
     (vector-set! population (+ i 1) a2))
   population0)

@@ -57,7 +57,7 @@
       (for ([i (in-range 0 (- (vector-length a*) 1) 2)])
         (define p1 (vector-ref a* i))
         (define p2 (vector-ref a* (+ i 1)))
-        (define-values (a1 a2) (send p1 match-pair p2 rounds-per-match))
+        (define-values (a1 a2) (send p1 interact p2 rounds-per-match))
         (vector-set! a* i a1)
         (vector-set! a* (+ i 1) a2))
       this)
