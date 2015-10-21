@@ -84,7 +84,7 @@
     (random states#))
   (automaton original-current original-current 0 (states*)))
 
-(make-random-automaton 4)
+; (make-random-automaton 4)
 
 ;; -----------------------------------------------------------------------------
 ;; State Table -> Automaton
@@ -105,51 +105,56 @@
 (define (make-automaton current table)
   (automaton current current 0 table))
 
-(define (transitions #:i-cooperate/it-cooperates cc
+;; CLASSIC Automata
+
+(define (defects p0)
+  (define defect-transitions
+    (transitions DEFECT
+                 DEFECT
+                 #:i-cooperate/it-cooperates DEFECT 
+                 #:i-cooperate/it-defects    DEFECT
+                 #:i-defect/it-cooperates    DEFECT
+                 #:i-defect/it-defects       DEFECT))
+  (automaton DEFECT DEFECT p0 defect-transitions))
+
+(define (cooperates p0)
+  (define cooperates-transitions
+    (transitions COOPERATE
+                 COOPERATE
+                 #:i-cooperate/it-cooperates COOPERATE 
+                 #:i-cooperate/it-defects    COOPERATE
+                 #:i-defect/it-cooperates    COOPERATE
+                 #:i-defect/it-defects       COOPERATE))
+  (automaton COOPERATE COOPERATE p0 cooperates-transitions))
+
+(define (tit-for-tat p0)
+  (define tit-for-tat-transitions
+    (transitions COOPERATE
+                 DEFECT
+                 #:i-cooperate/it-cooperates COOPERATE 
+                 #:i-cooperate/it-defects    DEFECT
+                 #:i-defect/it-cooperates    COOPERATE
+                 #:i-defect/it-defects       DEFECT))
+  (automaton COOPERATE COOPERATE p0 tit-for-tat-transitions))
+
+(define (grim-trigger p0)
+  (define grim-transitions
+    (transitions COOPERATE
+                 DEFECT
+                 #:i-cooperate/it-cooperates COOPERATE 
+                 #:i-cooperate/it-defects    DEFECT
+                 #:i-defect/it-cooperates    DEFECT
+                 #:i-defect/it-defects       DEFECT))
+  (automaton COOPERATE COOPERATE p0 grim-transitions))
+
+;; Action Action Index Index Index Index -> State*
+(define (transitions a1
+                     a2
+                     #:i-cooperate/it-cooperates cc
                      #:i-cooperate/it-defects    cd
                      #:i-defect/it-cooperates    dc
                      #:i-defect/it-defects       dd)
-  (vector (vector cc cd)
-          (vector dc dd)))
-
-;; CLASSIC AUTOMATA
-
-(define defect-transitions
-  (transitions #:i-cooperate/it-cooperates DEFECT 
-               #:i-cooperate/it-defects    DEFECT
-               #:i-defect/it-cooperates    DEFECT
-               #:i-defect/it-defects       DEFECT))
-
-(define (defects p0)
-  (automaton DEFECT DEFECT p0 defect-transitions))
-
-(define cooperates-transitions
-  (transitions #:i-cooperate/it-cooperates COOPERATE 
-               #:i-cooperate/it-defects    COOPERATE
-               #:i-defect/it-cooperates    COOPERATE
-               #:i-defect/it-defects       COOPERATE))
-
-(define (cooperates p0)
-  (automaton COOPERATE COOPERATE p0 cooperates-transitions))
-
-(define tit-for-tat-transitions
-  (transitions #:i-cooperate/it-cooperates COOPERATE 
-               #:i-cooperate/it-defects    DEFECT
-               #:i-defect/it-cooperates    COOPERATE
-               #:i-defect/it-defects       DEFECT))
-
-
-(define (tit-for-tat p0)
-  (automaton COOPERATE COOPERATE p0 tit-for-tat-transitions))
-
-(define grim-transitions
-  (transitions #:i-cooperate/it-cooperates COOPERATE 
-               #:i-cooperate/it-defects    DEFECT
-               #:i-defect/it-cooperates    DEFECT
-               #:i-defect/it-defects       DEFECT))
-
-(define (grim-trigger p0)
-  (automaton COOPERATE COOPERATE p0 grim-transitions))
+  (vector (state a1 (vector cc cd)) (state a2 (vector dc dd))))
 
 ;; -----------------------------------------------------------------------------
 (module+ test
@@ -168,9 +173,6 @@
   (automaton c0 c0 0 table))
 
 ;; -----------------------------------------------------------------------------
-;; Automata Automata N ->* Automata Automata
-;; the sum of pay-offs for the two respective automata over all rounds
-
 (module+ test
   (check-payoffs? (interact (defects 0) (cooperates 0) 10) 40 0)
   (check-payoffs? (interact (defects 0) (tit-for-tat 0) 10) 13 9)
@@ -185,9 +187,11 @@
                [current2 current2]
                [payoff2 payoff2])
               ([_ (in-range rounds-per-match)])
-      (match-define (cons p1 p2) (payoff current1 current2))
-      (define n1 (vector-ref (vector-ref table1 current1) current2))
-      (define n2 (vector-ref (vector-ref table2 current2) current1))
+      (match-define (state a1 v1) (vector-ref table1 current1))
+      (match-define (state a2 v2) (vector-ref table2 current2))
+      (define n1 (vector-ref v1 a2))
+      (define n2 (vector-ref v2 a1))
+      (match-define (cons p1 p2) (payoff a1 a2))
       (values n1 (+ payoff1 p1) n2 (+ payoff2 p2))))
   (values (automaton new1 c1 p1 table1) (automaton new2 c2 p2 table2)))
 
