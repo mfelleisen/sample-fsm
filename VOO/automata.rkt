@@ -17,7 +17,7 @@
 ;;     wipe out the historic payoff
 ;;
 ;;     [clone (-> Automaton)]
-;;     create new automaton from given one (same original state)
+;;     create new automaton from given one (same initial state)
 ;;
 ;;     [equal (-> Automaton)]
 
@@ -82,7 +82,7 @@
        current ;; State 
        payoff  ;; Payoff 
        table   ;; [Vectorof [Vectorof State]] 
-       (original current))
+       (initial current))
       (super-new)
       
       (define/public (interact other r)
@@ -102,10 +102,10 @@
         payoff)
       
       (define/public (reset)
-        (new automaton% [current original][payoff 0][table table]))
+        (new automaton% [current initial][payoff 0][table table]))
       
       (define/public (clone)
-        (new automaton% [current original][payoff 0][table table]))
+        (new automaton% [current initial][payoff 0][table table]))
       
       ;; State -> [Cons Payoff Payoff]
       (define/private (compute-payoffs other-current)
@@ -113,12 +113,12 @@
       
       (define/public (equal other)
         (and (= current (get-field current other))
-             (= original (get-field original other))
+             (= initial (get-field initial other))
              (= payoff (get-field payoff other))
              (equal? table (get-field table other))))
       
       (define/public (guts)
-        (list current original payoff table)))))
+        (list current initial payoff table)))))
 
 
 (define COOPERATE 0)

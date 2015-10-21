@@ -23,10 +23,10 @@
    (-> Automaton Automaton Natural (values Automaton Automaton)))
 
  (automaton-reset
-  ;; wipe out the historic payoff, set back to original state
+  ;; wipe out the historic payoff, set back to initial state
   (-> Automaton Automaton))
  (clone
-  ;; create new automaton from given one (same original state)
+  ;; create new automaton from given one (same initial state)
   (-> Automaton Automaton)))
 
 (provide
@@ -60,15 +60,15 @@
 (define-type Transition [Vectorof State])
 
 (struct automaton ({current : State}
-                   {original : State}
+                   {initial : State}
                    {payoff : Payoff}
                    {table : Transition*}) #:transparent)
 
 (define (make-random-automaton n)
   (: transitions [-> Any Transition])
   (define (transitions _i) (build-vector n (lambda (_) (random n))))
-  (define original-current (random n))
-  (automaton original-current original-current 0 (build-vector n transitions)))
+  (define initial-current (random n))
+  (automaton initial-current initial-current 0 (build-vector n transitions)))
 
 ;; -----------------------------------------------------------------------------
 ;; State Table -> Automaton

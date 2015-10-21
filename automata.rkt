@@ -24,7 +24,7 @@
  interact
  
  ;; Automaton -> Automaton 
- ;; create new automaton from given one (same original state)
+ ;; create new automaton from given one (same initial state)
  clone 
  
  ;; Automaton -> Automaton 
@@ -52,7 +52,7 @@
 ;; -----------------
 (define actions#  2)
 
-(struct automaton (current original payoff table) #:transparent)
+(struct automaton (current initial payoff table) #:transparent)
 (struct state (action dispatch) #:transparent)
 
 ;; Automaton   = (automaton Index Index Payoff State*)
@@ -64,7 +64,7 @@
 ;; [X ->f Y]   = [Vectorof Y | range: X]
 
 ;; (automaton c c0 p t) :
-;;   means the automaton is in state c and its original state is c0
+;;   means the automaton is in state c and its initial state is c0
 ;;   when an interaction takes place,
 ;;   -- let n = t(c) 
 ;;   -- n = [a,i] :
@@ -72,12 +72,12 @@
 ;;   if o is the action taken by the other agent 
 
 (define (make-random-automaton states#)
-  (define original-current (random states#))
+  (define initial-current (random states#))
   (define (states*) (build-vector states# make-state))
   (define (make-state _) (state (random actions#) (transitions)))
   (define (transitions) (build-vector actions# make-transition))
   (define (make-transition _) (random states#))
-  (automaton original-current original-current 0 (states*)))
+  (automaton initial-current initial-current 0 (states*)))
 
 ;; -----------------------------------------------------------------------------
 ;; State Table -> Automaton

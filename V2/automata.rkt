@@ -24,7 +24,7 @@
  interact
  
  ;; Automaton -> Automaton 
- ;; create new automaton from given one (same original state)
+ ;; create new automaton from given one (same initial state)
  clone 
  
  ;; Automaton -> Automaton 
@@ -50,7 +50,7 @@
 (define COOPERATE 0)
 (define DEFECT    1)
 
-(struct automaton (current original payoff table) #:transparent)
+(struct automaton (current initial payoff table) #:transparent)
 ;; Table      = [Vectorof n Transition])
 ;; Transition = [Vectorof n State]
 ;;            ~ [Vectorof [Input --> State]]
@@ -62,8 +62,8 @@
 (define (make-random-automaton n)
   ;; [Any -> Transition]
   (define (transitions _i) (build-vector n (lambda (_) (random n))))
-  (define original-current (random n))
-  (automaton original-current original-current 0 (build-vector n transitions)))
+  (define initial-current (random n))
+  (automaton initial-current initial-current 0 (build-vector n transitions)))
 
 ;; -----------------------------------------------------------------------------
 ;; State Table -> Automaton

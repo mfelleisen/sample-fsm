@@ -7,7 +7,7 @@
    (init-field [current State]
                [payoff Payoff] 
                [table Transition*] 
-               [original State #:optional])
+               [initial State #:optional])
    [interact
     ;; the sum of pay-offs for the two respective automata over all rounds
     (-> oAutomaton Natural (values oAutomaton oAutomaton))]
@@ -20,7 +20,7 @@
     ;; reset the historic payoff 
     (-> oAutomaton)]
    [clone
-    ;; reset payoff and current state to original strategy
+    ;; reset payoff and current state to initial strategy
     (-> oAutomaton)]
    [equal (-> oAutomaton Boolean)]))
 
@@ -86,7 +86,7 @@
        current ;; State 
        payoff  ;; Payoff 
        table   ;; [Vectorof [Vectorof State]] 
-       (original current))
+       (initial current))
       (super-new)
       
       (define/public (interact other r)
@@ -105,10 +105,10 @@
         payoff)
       
       (define/public (reset)
-        (new automaton% [current original][payoff 0][table table]))
+        (new automaton% [current initial][payoff 0][table table]))
       
       (define/public (clone)
-        (new automaton% [current original][payoff 0][table table]))
+        (new automaton% [current initial][payoff 0][table table]))
       
       (: compute-payoffs (-> State [cons Payoff Payoff]))
       (define/private (compute-payoffs other-current)
@@ -116,7 +116,7 @@
       
       (define/public (equal other)
         (and (= current (get-field current other))
-             (= original (get-field original other))
+             (= initial (get-field initial other))
              (= payoff (get-field payoff other))
              (equal? table (get-field table other)))))))
 
