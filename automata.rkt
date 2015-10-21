@@ -15,8 +15,8 @@
  ;; Automaton -> Payoff 
  automaton-payoff 
  
- ;; N N -> Automaton
- ;; (make-random-automaton n k) builds an n states x k inputs automaton
+ ;; N -> Automaton
+ ;; (make-random-automaton n) builds an n states/2 actions automaton
  ;; with a random transition table 
  make-random-automaton
  
@@ -71,20 +71,13 @@
 ;;   means it takes action a and uses i(o) as the next state
 ;;   if o is the action taken by the other agent 
 
-
 (define (make-random-automaton states#)
   (define original-current (random states#))
-  (define (states*)
-    (build-vector states# make-state))
-  (define (make-state _)
-    (state (random states#) (transitions)))
-  (define (transitions)
-    (build-vector actions# make-transition))
-  (define (make-transition _)
-    (random states#))
+  (define (states*) (build-vector states# make-state))
+  (define (make-state _) (state (random actions#) (transitions)))
+  (define (transitions) (build-vector actions# make-transition))
+  (define (make-transition _) (random states#))
   (automaton original-current original-current 0 (states*)))
-
-; (make-random-automaton 4)
 
 ;; -----------------------------------------------------------------------------
 ;; State Table -> Automaton
@@ -182,16 +175,14 @@
   (match-define (automaton current1 c1 payoff1 table1) auto1)
   (match-define (automaton current2 c2 payoff2 table2) auto2)
   (define-values (new1 p1 new2 p2)
-    (for/fold ([current1 current1]
-               [payoff1 payoff1]
-               [current2 current2]
-               [payoff2 payoff2])
+    (for/fold ([current1 current1] [payoff1 payoff1]
+               [current2 current2] [payoff2 payoff2])
               ([_ (in-range rounds-per-match)])
       (match-define (state a1 v1) (vector-ref table1 current1))
       (match-define (state a2 v2) (vector-ref table2 current2))
+      (match-define (cons p1 p2) (payoff a1 a2))
       (define n1 (vector-ref v1 a2))
       (define n2 (vector-ref v2 a1))
-      (match-define (cons p1 p2) (payoff a1 a2))
       (values n1 (+ payoff1 p1) n2 (+ payoff2 p2))))
   (values (automaton new1 c1 p1 table1) (automaton new2 c2 p2 table2)))
 
