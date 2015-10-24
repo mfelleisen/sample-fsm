@@ -154,6 +154,12 @@ fsm0 |       is the top-level file
 population | a data representation for a population 
 automata   |    a data representation for automata 
 
+Deprecated
+----------
+
+V2 and VOO are deprecated versions of this repository. 
+
+
 Acknowledgment 
 --------------
 
