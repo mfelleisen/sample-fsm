@@ -65,6 +65,7 @@
 
 ;; TODO: Chi suggests keeping around a list of payoffs so that the model
 ;; can incooperate discounting of future income at some inflation rate.
+;; This would also affect relative-average and other functions. 
 
 ;; (automaton c c0 p t) :
 ;;   means the automaton is in state c and its initial state is c0
