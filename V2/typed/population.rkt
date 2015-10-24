@@ -17,8 +17,8 @@
   ;; (match-ups p r) matches up neighboring pairs of
   ;; automata in population p for r rounds 
   (-> Population Natural Population))
- (death-birth
-  ;; (death-birth p r) replaces r elements of p with r "children" of 
+ (regenerate
+  ;; (regenerate p r) replaces r elements of p with r "children" of 
   ;; randomly chosen fittest elements of p, also shuffle 
   ;; constraint (< r (length p))
   (-> Population Natural [#:random (U False Real)] Population)))
@@ -95,7 +95,7 @@
 (module+ test
   (define a* (vector (cooperates 1)))
   (define p* (cons a* a*))
-  (check-equal? (death-birth p* 1) p*)
+  (check-equal? (regenerate p* 1) p*)
   
   (define a20 (vector (cooperates 1)  (cooperates 9)))
   (define p20 (cons a20 a20))
@@ -105,9 +105,9 @@
      [(cons a* b*)
       (member a* (list (vector (cooperates 0) (cooperates 9))
                        (vector (cooperates 9) (cooperates 0))))])
-   (death-birth p20 1 #:random .2)))
+   (regenerate p20 1 #:random .2)))
 
-(define (death-birth population0 rate #:random (q #false))
+(define (regenerate population0 rate #:random (q #false))
   (match-define (cons a* b*) population0)
   (define payoffs
     (for/list : [Listof Payoff] ([x : Automaton (in-vector a*)])

@@ -39,7 +39,7 @@
     [(zero? c) '()]
     [else (define p2 (match-up* p r))
           (define pp (population-payoffs p2))
-          (define p3 (death-birth p2 s))
+          (define p3 (regenerate p2 s))
           (cons (relative-average pp r) (evolve p3 (- c 1) s r))]))
 
 

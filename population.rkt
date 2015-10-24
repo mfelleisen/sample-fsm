@@ -19,10 +19,10 @@
  match-up*
  
  ;; Population N -> Population 
- ;; (death-birth p r) replaces r elements of p with r "children" of 
+ ;; (regenerate p r) replaces r elements of p with r "children" of 
  ;; randomly chosen fittest elements of p, also shuffle 
  ;; constraint (< r (length p))
- death-birth)
+ regenerate)
 
 ;; =============================================================================
 (require "automata.rkt" "utilities.rkt")
@@ -91,7 +91,7 @@
 (module+ test
   (define a* (vector (cooperates 1)))
   (define p* (cons a* a*))
-  (check-equal? (death-birth p* 1) p*)
+  (check-equal? (regenerate p* 1) p*)
 
   (define a20 (vector (cooperates 1)  (cooperates 9)))
   (define p20 (cons a20 a20))
@@ -101,15 +101,23 @@
      [(cons a* b*)
       (member a* (list (vector (cooperates 0) (cooperates 9))
                        (vector (cooperates 9) (cooperates 0))))])
-   (death-birth p20 1 #:random .2)))
+   (regenerate p20 1 #:random .2)))
 
-(define (death-birth population0 rate #:random (q #false))
+(define (regenerate population0 rate #:random (q #false))
   (match-define (cons a* b*) population0)
-  (define payoffs (for/list ([x (in-vector a*)]) (automaton-payoff x)))
-  [define substitutes (choose-randomly payoffs rate #:random q)]
+  (define probabilities (payoff->probabilities a*))
+  [define substitutes   (choose-randomly probabilities rate #:random q)]
   (for ([i (in-range rate)][p (in-list substitutes)])
     (vector-set! a* i (clone (vector-ref b* p))))
   (shuffle-vector a* b*))
+
+;; Automata* -> [Listof Probability]
+;; turn the list of automata into a list of probabilities based on payoffs
+;; CONSTRAINT (list-ref @result i) corresponds to probability oe (list-ref a* i)
+(define (payoff->probabilities a*)
+  (define payoffs (for/list ([x (in-vector a*)]) (automaton-payoff x)))
+  (define total   (sum payoffs))
+  (for/list ([p (in-list payoffs)]) (/ p total)))
 
 ;; Automata* Automata* -> (cons Automata* Automata*)
 ;; effect: shuffle vector b into vector a

@@ -46,7 +46,7 @@
     [else (define p2 (match-up* p r))
           ;; Note: r is typed as State even though State is not exported 
           (define pp (population-payoffs p2))
-          (define p3 (death-birth p2 s))
+          (define p3 (regenerate p2 s))
           ;; Note: s same as r
           ({inst cons Payoff [Listof Payoff]}
            (cast (relative-average pp r) Payoff)

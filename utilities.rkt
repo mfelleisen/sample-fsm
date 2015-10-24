@@ -11,7 +11,9 @@
  
  ;; type Probability = NonNegativeReal 
  ;; [Listof Probability] N -> [Listof N]
- ;; choose n random indices i such i's likelihood is (list-ref probabilities i)
+ ;; (probability lop) choose n random indices i such i's
+ ;; likelihood is proportional to (list-ref lop i)
+ ;; constraint: (sum lop) = #i1.0 (warning: inexacts!)
  choose-randomly)
 
 ;; =============================================================================
@@ -38,7 +40,7 @@
 ;; -----------------------------------------------------------------------------
 
 (module+ test
-  (define p0 (list 10 90))
+  (define p0 (list .10 .90))
   (check-equal? (choose-randomly p0 1 #:random .2) (list 1)))
 
 (define (choose-randomly probabilities speed #:random (q #false))
@@ -52,14 +54,14 @@
 ;; calculate the accumulated probabilities 
 
 (module+ test
-  (check-equal? (accumulated-%s (list 1)) '(1.0))
-  (check-equal? (accumulated-%s (list 2 2)) '(.5 1.0))
-  (check-equal? (accumulated-%s (list 2 8)) '(.2 1.0)))
+  (check-equal? (accumulated-%s (list .1)) '(.1))
+  (check-equal? (accumulated-%s (list .2 .2)) '(.2 .4))
+  ;; this one is legitimate:
+  (check-equal? (accumulated-%s (list .2 .8)) '(.2 1.0)))
 
 (define (accumulated-%s probabilities)
-  (define total (sum probabilities))
   (let relative->absolute ([payoffs probabilities][so-far #i0.0])
     (cond
       [(empty? payoffs) '()]
       [else (define nxt (+ so-far (first payoffs)))
-            (cons (/ nxt total) (relative->absolute (rest payoffs) nxt))])))
+            (cons nxt (relative->absolute (rest payoffs) nxt))])))

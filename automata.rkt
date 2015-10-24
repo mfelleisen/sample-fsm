@@ -63,6 +63,9 @@
 ;; Index       = [0,n)
 ;; [X ->f Y]   = [Vectorof Y | range: X]
 
+;; TODO: Chi suggests keeping around a list of payoffs so that the model
+;; can incooperate discounting of future income at some inflation rate.
+
 ;; (automaton c c0 p t) :
 ;;   means the automaton is in state c and its initial state is c0
 ;;   when an interaction takes place,
@@ -99,8 +102,7 @@
   (automaton current current 0 table))
 
 ;; CLASSIC Automata
-
-(define (defects p0)
+(define (defects.v0 p0)
   (define defect-transitions
     (transitions DEFECT
                  DEFECT
@@ -110,7 +112,12 @@
                  #:i-defect/it-defects       DEFECT))
   (automaton DEFECT DEFECT p0 defect-transitions))
 
-(define (cooperates p0)
+;; Chi observes that this definition is smaller than the above,
+;; but in my mind less easy to read than .v0
+(define (defects p0)
+  (automaton 0 0 p0 (vector (state DEFECT (vector 0 0)))))
+
+(define (cooperates.v0 p0)
   (define cooperates-transitions
     (transitions COOPERATE
                  COOPERATE
@@ -119,6 +126,10 @@
                  #:i-defect/it-cooperates    COOPERATE
                  #:i-defect/it-defects       COOPERATE))
   (automaton COOPERATE COOPERATE p0 cooperates-transitions))
+
+(define (cooperates p0)
+  (define t (vector (state COOPERATE (vector COOPERATE COOPERATE))))
+  (automaton COOPERATE COOPERATE p0 t))
 
 (define (tit-for-tat p0)
   (define tit-for-tat-transitions

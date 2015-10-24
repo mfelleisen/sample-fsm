@@ -9,8 +9,8 @@
 ;; automata in population p for r rounds 
 ;; 
 
-;; death-birth N -> Population 
-;; (death-birth p r) replaces r elements of p with r "children" of 
+;; regenerate N -> Population 
+;; (regenerate p r) replaces r elements of p with r "children" of 
 ;; randomly chosen fittest elements of p, also shuffle 
 ;; constraint (< r (length p))
 
@@ -62,7 +62,7 @@
         (vector-set! a* (+ i 1) a2))
       this)
     
-    (define/public (death-birth rate #:random (q #false))
+    (define/public (regenerate rate #:random (q #false))
       (define payoffs (for/list ([x (in-vector a*)]) (send x pay)))
       [define substitutes (choose-randomly payoffs rate #:random q)]
       (for ([i (in-range rate)][p (in-list substitutes)])
@@ -122,7 +122,7 @@
   
   (define a* (vector (cooperates 1)))
   (define p* (new population% [a* a*]))
-  (check-equal? (send p* death-birth 1) p*)
+  (check-equal? (send p* regenerate 1) p*)
   
   (define a20 (vector (cooperates 1)  (cooperates 9)))
   (define p20 (new population% [a* a20]))
@@ -139,5 +139,5 @@
       (and
        (send (vector-ref a* 0) equal c9)
        (send (vector-ref a* 1) equal c0))))
-   (send p20 death-birth 1 #:random .2)))
+   (send p20 regenerate 1 #:random .2)))
 
