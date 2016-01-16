@@ -91,7 +91,7 @@
         (define t1 (get-field table this))
         (define c2 (box (get-field current other)))
         (define y2 (box (get-field payoff other)))
-        (define t2 (get-field table this))
+        (define t2 (get-field table other))
         (for ([_i (in-range r)])
           (define input (unbox c2))
           (match-define (cons p1 p2)
